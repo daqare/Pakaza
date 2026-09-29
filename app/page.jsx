@@ -1,16 +1,26 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import usePakazaStore from '../lib/store';
 import { saccos } from '../lib/saccos';
 import ParcelDetailModal from '../components/ParcelDetailModal';
 
 export default function Home() {
-  const { parcels, ledger, currentRole, resetDemoData, setSelectedParcel } = usePakazaStore();
+  const [isMounted, setIsMounted] = useState(false);
+  const [showQrModal, setShowQrModal] = useState(null);
   const [searchId, setSearchId] = useState('');
   const [searchResult, setSearchResult] = useState(null);
-  const [showQrModal, setShowQrModal] = useState(null);
   
+  const { parcels, ledger, currentRole, resetDemoData, setSelectedParcel } = usePakazaStore();
+  
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  if (!isMounted) {
+    return <div className="p-8 text-center">Loading PAKAZA Dashboard...</div>;
+  }
+
   const totalRevenue = ledger.reduce((sum, entry) => sum + entry.total, 0);
 
   const handleReset = () => {
@@ -25,24 +35,19 @@ export default function Home() {
     setSearchResult(found || 'NOT_FOUND');
   };
 
-  const handleShowQr = (sacco) => {
-    setShowQrModal(sacco);
-  };
-
   // --- ADMIN VIEW ---
   if (currentRole === 'ADMIN') {
     return (
-      <div className="space-y-6 animate-slide-up">
+      <div className="space-y-6">
         <ParcelDetailModal />
         
-        {/* QR Code Modal */}
         {showQrModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={() => setShowQrModal(null)}>
-            <div className="bg-white rounded-2xl p-8 max-w-sm w-full text-center animate-slide-up" onClick={(e) => e.stopPropagation()}>
+            <div className="bg-white rounded-2xl p-8 max-w-sm w-full text-center" onClick={(e) => e.stopPropagation()}>
               <h3 className="text-xl font-bold text-gray-900 mb-2">{showQrModal.name} QR Code</h3>
-              <p className="text-sm text-gray-500 mb-6">Clients scan this to book directly with {showQrModal.name}</p>
+              <p className="text-sm text-gray-500 mb-6">Clients scan this to book directly</p>
               
-              <div className="w-48 h-48 bg-gray-900 rounded-xl mx-auto mb-4 flex items-center justify-center text-white text-xs p-4 font-mono">
+              <div className="w-48 h-48 bg-gray-900 rounded-xl mx-auto mb-4 flex items-center justify-center text-white text-xs p-4">
                 <div className="grid grid-cols-8 gap-1 w-full h-full">
                   {[...Array(64)].map((_, i) => (
                     <div key={i} className={`rounded-sm ${Math.random() > 0.4 ? 'bg-white' : 'bg-transparent'}`}></div>
@@ -51,8 +56,7 @@ export default function Home() {
               </div>
               
               <div className="bg-gray-100 p-3 rounded-lg mb-4">
-                <p className="text-xs text-gray-500 mb-1">Direct Booking Link:</p>
-                <p className="text-xs font-mono text-pakaza-blue break-all">/new?sacco={showQrModal.id}</p>
+                <p className="text-xs font-mono text-pakaza-blue">/new?sacco={showQrModal.id}</p>
               </div>
               
               <button onClick={() => setShowQrModal(null)} className="w-full bg-pakaza-blue text-white py-3 rounded-xl font-bold hover:bg-pakaza-darkBlue transition">Close</button>
@@ -87,22 +91,17 @@ export default function Home() {
           </div>
         </div>
 
-        {/* SACCO QR Codes Section */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h2 className="text-lg font-semibold mb-4">Operator Self-Service QR Codes</h2>
+          <h2 className="text-lg font-semibold mb-4">Operator QR Codes</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {saccos.map((sacco) => (
-              <div key={sacco.id} className="border border-gray-200 rounded-xl p-4 flex flex-col items-center text-center hover:shadow-md transition">
+              <div key={sacco.id} className="border border-gray-200 rounded-xl p-4 flex flex-col items-center text-center">
                 <div className={`w-12 h-12 ${sacco.color} rounded-lg mb-3 flex items-center justify-center text-white font-bold text-xl`}>
                   {sacco.name.charAt(0)}
                 </div>
-                <h3 className="font-bold text-gray-900">{sacco.name}</h3>
-                <p className="text-xs text-gray-500 mb-4">{sacco.route}</p>
-                <button 
-                  onClick={() => handleShowQr(sacco)}
-                  className="w-full bg-gray-900 text-white py-2 rounded-lg text-sm font-semibold hover:bg-gray-800 transition flex items-center justify-center gap-2"
-                >
-                  📱 View QR Code
+                <h3 className="font-bold text-gray-900 text-sm">{sacco.name}</h3>
+                <button onClick={() => setShowQrModal(sacco)} className="mt-3 w-full bg-gray-900 text-white py-2 rounded-lg text-xs font-semibold hover:bg-gray-800 transition">
+                  View QR
                 </button>
               </div>
             ))}
@@ -112,17 +111,17 @@ export default function Home() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-semibold">Recent Activity</h2>
-            <button onClick={handleReset} className="text-xs text-gray-400 hover:text-red-500 transition">Reset to Default</button>
+            <button onClick={handleReset} className="text-xs text-gray-400 hover:text-red-500 transition">Reset</button>
           </div>
           <div className="space-y-3">
             {parcels.slice(0, 5).map((parcel) => (
               <button 
                 key={parcel.id} 
                 onClick={() => setSelectedParcel(parcel)}
-                className="w-full flex justify-between items-center p-4 bg-gray-50 rounded-xl border border-transparent hover:border-pakaza-blue/30 hover:bg-blue-50/50 transition-all duration-200 text-left group"
+                className="w-full flex justify-between items-center p-4 bg-gray-50 rounded-xl border border-transparent hover:border-pakaza-blue/30 hover:bg-blue-50/50 transition-all text-left"
               >
                 <div>
-                  <p className="font-bold text-pakaza-blue group-hover:text-pakaza-darkBlue">{parcel.id}</p>
+                  <p className="font-bold text-pakaza-blue">{parcel.id}</p>
                   <p className="text-sm text-gray-600">{parcel.senderName} → {parcel.receiverName}</p>
                 </div>
                 <div className="flex items-center gap-3">
@@ -134,7 +133,7 @@ export default function Home() {
                   }`}>
                     {parcel.status.replace('_', ' ')}
                   </span>
-                  <span className="text-gray-400 group-hover:text-pakaza-blue">→</span>
+                  <span className="text-gray-400">→</span>
                 </div>
               </button>
             ))}
@@ -147,9 +146,9 @@ export default function Home() {
   // --- STAFF VIEW ---
   if (currentRole === 'STAFF') {
     return (
-      <div className="space-y-6 animate-slide-up max-w-2xl mx-auto text-center pt-10">
+      <div className="space-y-6 max-w-2xl mx-auto text-center pt-10">
         <div className="bg-white p-10 rounded-2xl shadow-lg border border-gray-200">
-          <div className="text-6xl mb-4"></div>
+          <div className="text-6xl mb-4">📦</div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Counter Staff Portal</h1>
           <p className="text-gray-500 mb-8">Fast intake and M-Pesa integration.</p>
           <Link href="/new" className="block w-full bg-pakaza-blue text-white text-xl py-4 rounded-xl font-bold hover:bg-pakaza-darkBlue transition shadow-lg">
@@ -173,7 +172,7 @@ export default function Home() {
   // --- CLIENT VIEW ---
   if (currentRole === 'CLIENT') {
     return (
-      <div className="space-y-6 animate-slide-up max-w-2xl mx-auto text-center pt-10">
+      <div className="space-y-6 max-w-2xl mx-auto text-center pt-10">
         <div className="bg-white p-10 rounded-2xl shadow-lg border border-gray-200">
           <div className="text-6xl mb-4">📱</div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Client Tracking</h1>
@@ -183,7 +182,7 @@ export default function Home() {
             <button type="submit" className="bg-pakaza-green text-white px-6 py-3 rounded-xl font-bold hover:bg-green-700 transition">Track</button>
           </form>
           {searchResult && searchResult !== 'NOT_FOUND' && (
-            <div className="bg-green-50 border border-green-200 p-6 rounded-xl mb-6 text-left animate-slide-up">
+            <div className="bg-green-50 border border-green-200 p-6 rounded-xl mb-6 text-left">
               <div className="flex justify-between items-start mb-4">
                 <div><p className="text-sm text-gray-600">Tracking ID</p><p className="text-2xl font-bold text-pakaza-blue">{searchResult.id}</p></div>
                 <span className="px-4 py-2 rounded-full text-sm font-bold bg-green-100 text-green-700">{searchResult.status.replace('_', ' ')}</span>
@@ -197,8 +196,8 @@ export default function Home() {
             </div>
           )}
           {searchResult === 'NOT_FOUND' && (
-            <div className="bg-red-50 border border-red-200 p-4 rounded-xl mb-6 text-left animate-slide-up">
-              <p className="text-red-700 font-semibold">❌ Parcel not found</p>
+            <div className="bg-red-50 border border-red-200 p-4 rounded-xl mb-6 text-left">
+              <p className="text-red-700 font-semibold"> Parcel not found</p>
               <p className="text-sm text-red-600">Please check your tracking ID and try again.</p>
             </div>
           )}
