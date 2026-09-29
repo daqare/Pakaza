@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, Suspense } from 'react';
+import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import usePakazaStore from '../../lib/store';
 import { saccos } from '../../lib/saccos';
@@ -18,7 +18,7 @@ function NewParcelContent() {
     senderPhone: '',
     receiverName: '',
     receiverPhone: '',
-    saccoId: saccoParam || '', // AUTO-FILL from URL if present
+    saccoId: saccoParam || '',
     weightKg: '',
     description: '',
   });
@@ -37,7 +37,7 @@ function NewParcelContent() {
 
   const handlePayment = async () => {
     setIsPaying(true);
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    await new Promise(resolve => setTimeout(resolve, 1500));
     
     const newParcel = addParcel({
       ...formData,
@@ -79,7 +79,6 @@ function NewParcelContent() {
       <h1 className="text-3xl font-bold text-pakaza-blue mb-6">New Parcel</h1>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Sender Details */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
           <h2 className="text-lg font-semibold mb-4">Your Details (Sender)</h2>
           <div className="space-y-4">
@@ -94,7 +93,6 @@ function NewParcelContent() {
           </div>
         </div>
 
-        {/* Receiver Details */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
           <h2 className="text-lg font-semibold mb-4">Receiver Details</h2>
           <div className="space-y-4">
@@ -109,7 +107,6 @@ function NewParcelContent() {
           </div>
         </div>
 
-        {/* Parcel Details */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
           <h2 className="text-lg font-semibold mb-4">Parcel Details</h2>
           <div className="space-y-4">
@@ -117,7 +114,7 @@ function NewParcelContent() {
               <label className="block text-sm font-medium text-gray-700 mb-1">Select SACCO *</label>
               <select
                 required
-                disabled={!!saccoParam} // Lock if scanned from QR
+                disabled={!!saccoParam}
                 className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pakaza-blue ${saccoParam ? 'bg-gray-100 text-gray-600' : ''}`}
                 value={formData.saccoId}
                 onChange={(e) => setFormData({...formData, saccoId: e.target.value})}
@@ -144,7 +141,6 @@ function NewParcelContent() {
         </button>
       </form>
 
-      {/* Payment Modal */}
       {showPayment && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 overflow-y-auto">
           <div className="bg-white rounded-2xl p-8 max-w-md w-full animate-slide-up my-8">
