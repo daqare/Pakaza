@@ -12,7 +12,8 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body className="bg-pakaza-light min-h-screen flex flex-col relative">
-        <header className="bg-pakaza-blue text-white shadow-md sticky top-0 z-40">
+        {/* Added 'no-print' class to header so it doesn't print */}
+        <header className="bg-pakaza-blue text-white shadow-md sticky top-0 z-40 no-print">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center text-pakaza-blue font-black text-xl">P</div>
@@ -26,14 +27,18 @@ export default function RootLayout({ children }) {
           <ClientOnly>{children}</ClientOnly>
         </main>
 
-        <footer className="bg-white border-t border-gray-200 py-6 mt-auto">
+        {/* Added 'no-print' class to footer */}
+        <footer className="bg-white border-t border-gray-200 py-6 mt-auto no-print">
           <div className="max-w-7xl mx-auto px-4 text-center text-sm text-gray-500">
             © 2026 PAKAZA Parcel Network. Demo Environment.
           </div>
         </footer>
 
-        <SmsToast />
-        <RoleSwitcher />
+        {/* Added 'no-print' class to global tools */}
+        <div className="no-print">
+          <SmsToast />
+          <RoleSwitcher />
+        </div>
       </body>
     </html>
   );
