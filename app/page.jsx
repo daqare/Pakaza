@@ -6,7 +6,7 @@ import { saccos } from '../lib/saccos';
 import ParcelDetailModal from '../components/ParcelDetailModal';
 
 export default function Home() {
-  const { parcels, ledger, currentRole, operatorSaccoId, resetDemoData, setSelectedParcel } = usePakazaStore();
+  const { parcels, ledger, currentRole, operatorSaccoId, setOperatorSaccoId, resetDemoData, setSelectedParcel } = usePakazaStore();
   const [searchId, setSearchId] = useState('');
   const [searchResult, setSearchResult] = useState(null);
   const [showQrModal, setShowQrModal] = useState(null);
@@ -16,8 +16,8 @@ export default function Home() {
   // --- OPERATOR SPECIFIC CALCULATIONS ---
   const myParcels = parcels ? parcels.filter(p => p.saccoId === operatorSaccoId) : [];
   const myRevenue = myParcels.reduce((sum, p) => sum + (p.price || 0), 0);
-  const myEarnings = Math.round(myRevenue * 0.45); // The 45% Rule
-  const mySacco = saccos.find(s => s.id === operatorSaccoId);
+  const myEarnings = Math.round(myRevenue * 0.45); 
+  const mySacco = saccos ? saccos.find(s => s.id === operatorSaccoId) : null;
 
   const handleReset = () => { if (window.confirm('Reset data?')) resetDemoData(); };
   const handleTrack = (e) => {
@@ -89,11 +89,29 @@ export default function Home() {
     );
   }
 
-  // --- OPERATOR VIEW (NEW!) ---
+  // --- OPERATOR VIEW (WITH DROPDOWN) ---
   if (currentRole === 'OPERATOR') {
     return (
       <div className="space-y-6 animate-slide-up">
         <ParcelDetailModal />
+        
+        {/* NEW: Demo Simulation Dropdown */}
+        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div>
+            <p className="text-xs text-gray-500 uppercase font-bold">Demo Simulation</p>
+            <p className="text-sm text-gray-700">Switch driver identity to test different revenue splits.</p>
+          </div>
+          <select
+            value={operatorSaccoId}
+            onChange={(e) => setOperatorSaccoId(e.target.value)}
+            className="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pakaza-blue font-semibold text-pakaza-blue bg-gray-50"
+          >
+            {saccos && saccos.map(s => (
+              <option key={s.id} value={s.id}>🚐 {s.name} Driver</option>
+            ))}
+          </select>
+        </div>
+
         <div className="bg-gradient-to-r from-pakaza-blue to-blue-800 text-white p-8 rounded-2xl shadow-lg">
           <div className="flex items-center gap-4 mb-4">
             <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center text-3xl">🚐</div>
@@ -129,7 +147,7 @@ export default function Home() {
                   <span className={`px-3 py-1 rounded-full text-xs font-bold ${parcel.status === 'PAID' ? 'bg-blue-100 text-blue-700' : parcel.status === 'IN_TRANSIT' ? 'bg-purple-100 text-purple-700' : 'bg-green-100 text-green-700'}`}>{(parcel.status || 'UNKNOWN').replace('_', ' ')}</span>
                 </div>
               </button>
-            )) : <p className="text-gray-500 text-center py-4">No deliveries for your SACCO yet.</p>}
+            )) : <p className="text-gray-500 text-center py-4">No deliveries for {mySacco?.name} yet. Try creating a parcel for this SACCO!</p>}
           </div>
         </div>
       </div>
