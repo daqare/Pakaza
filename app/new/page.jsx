@@ -1,10 +1,10 @@
-
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import usePakazaStore from '../../lib/store';
 import { saccos } from '../../lib/saccos';
 import { calculatePrice } from '../../lib/pricing';
+import WaybillReceipt from '../../components/WaybillReceipt';
 
 export default function NewParcel() {
   const router = useRouter();
@@ -22,6 +22,7 @@ export default function NewParcel() {
   
   const [showPayment, setShowPayment] = useState(false);
   const [isPaying, setIsPaying] = useState(false);
+  const [generatedParcel, setGeneratedParcel] = useState(null);
   
   const price = calculatePrice(parseFloat(formData.weightKg) || 0);
 
@@ -36,18 +37,28 @@ export default function NewParcel() {
     // Simulate M-Pesa STK push delay
     await new Promise(resolve => setTimeout(resolve, 2000));
     
-    const parcel = addParcel({
+    const newParcel = addParcel({
       ...formData,
       weightKg: parseFloat(formData.weightKg),
     });
     
     setIsPaying(false);
     setShowPayment(false);
+    setGeneratedParcel(newParcel); // Show receipt instead of instant redirect
+  };
+
+  const handleReceiptClose = () => {
+    setGeneratedParcel(null);
     router.push('/');
   };
 
   return (
     <div className="max-w-2xl mx-auto">
+      {/* Show Receipt if parcel was just created */}
+      {generatedParcel && (
+        <WaybillReceipt parcel={generatedParcel} onClose={handleReceiptClose} />
+      )}
+
       <div className="mb-6">
         <button 
           onClick={() => router.back()}
@@ -63,12 +74,9 @@ export default function NewParcel() {
         {/* Sender Details */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
           <h2 className="text-lg font-semibold mb-4">Sender Details</h2>
-          
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Full Name *
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
               <input
                 type="text"
                 required
@@ -77,11 +85,8 @@ export default function NewParcel() {
                 onChange={(e) => setFormData({...formData, senderName: e.target.value})}
               />
             </div>
-            
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Phone Number *
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number *</label>
               <input
                 type="tel"
                 required
@@ -97,12 +102,9 @@ export default function NewParcel() {
         {/* Receiver Details */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
           <h2 className="text-lg font-semibold mb-4">Receiver Details</h2>
-          
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Full Name *
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
               <input
                 type="text"
                 required
@@ -111,11 +113,8 @@ export default function NewParcel() {
                 onChange={(e) => setFormData({...formData, receiverName: e.target.value})}
               />
             </div>
-            
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Phone Number *
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number *</label>
               <input
                 type="tel"
                 required
@@ -131,12 +130,9 @@ export default function NewParcel() {
         {/* Parcel Details */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
           <h2 className="text-lg font-semibold mb-4">Parcel Details</h2>
-          
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Select SACCO *
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Select SACCO *</label>
               <select
                 required
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pakaza-blue focus:border-transparent"
@@ -153,9 +149,7 @@ export default function NewParcel() {
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Weight (kg) *
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Weight (kg) *</label>
               <input
                 type="number"
                 step="0.1"
@@ -173,9 +167,7 @@ export default function NewParcel() {
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Description
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
               <textarea
                 rows="3"
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pakaza-blue focus:border-transparent"
@@ -197,7 +189,7 @@ export default function NewParcel() {
       {/* Payment Modal */}
       {showPayment && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl p-8 max-w-md w-full">
+          <div className="bg-white rounded-2xl p-8 max-w-md w-full animate-slide-up">
             <h2 className="text-2xl font-bold text-gray-900 mb-4">M-Pesa Payment</h2>
             
             <div className="bg-gray-50 p-4 rounded-lg mb-6">
@@ -226,7 +218,7 @@ export default function NewParcel() {
                 disabled={isPaying}
                 className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition disabled:opacity-50"
               >
-                {isPaying ? 'Processing...' : 'Pay with M-Pesa'}
+                {isPaying ? 'Processing STK Push...' : 'Pay with M-Pesa'}
               </button>
               
               <button
