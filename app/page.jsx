@@ -35,6 +35,13 @@ export default function Home() {
     setSearchResult(found || 'NOT_FOUND');
   };
 
+  // Helper to safely get SACCO name
+  const getSaccoName = (saccoId) => {
+    if (!saccoId) return 'Unknown';
+    const sacco = saccos.find(s => s.id === saccoId);
+    return sacco ? sacco.name : 'Unknown';
+  };
+
   // --- ADMIN VIEW ---
   if (currentRole === 'ADMIN') {
     return (
@@ -125,13 +132,13 @@ export default function Home() {
                   <p className="text-sm text-gray-600">{parcel.senderName} → {parcel.receiverName}</p>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="hidden sm:inline text-xs font-semibold text-gray-500">KES {parcel.price.toLocaleString()}</span>
+                  <span className="hidden sm:inline text-xs font-semibold text-gray-500">KES {parcel.price?.toLocaleString() || 0}</span>
                   <span className={`px-3 py-1 rounded-full text-xs font-bold ${
                     parcel.status === 'PAID' ? 'bg-blue-100 text-blue-700' :
                     parcel.status === 'IN_TRANSIT' ? 'bg-purple-100 text-purple-700' :
                     parcel.status === 'ARRIVED' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
                   }`}>
-                    {parcel.status.replace('_', ' ')}
+                    {parcel.status?.replace('_', ' ') || 'UNKNOWN'}
                   </span>
                   <span className="text-gray-400">→</span>
                 </div>
@@ -174,7 +181,7 @@ export default function Home() {
     return (
       <div className="space-y-6 max-w-2xl mx-auto text-center pt-10">
         <div className="bg-white p-10 rounded-2xl shadow-lg border border-gray-200">
-          <div className="text-6xl mb-4">📱</div>
+          <div className="text-6xl mb-4"></div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Client Tracking</h1>
           <p className="text-gray-500 mb-8">Enter your tracking ID to see live status.</p>
           <form onSubmit={handleTrack} className="flex gap-2 mb-6">
@@ -185,19 +192,19 @@ export default function Home() {
             <div className="bg-green-50 border border-green-200 p-6 rounded-xl mb-6 text-left">
               <div className="flex justify-between items-start mb-4">
                 <div><p className="text-sm text-gray-600">Tracking ID</p><p className="text-2xl font-bold text-pakaza-blue">{searchResult.id}</p></div>
-                <span className="px-4 py-2 rounded-full text-sm font-bold bg-green-100 text-green-700">{searchResult.status.replace('_', ' ')}</span>
+                <span className="px-4 py-2 rounded-full text-sm font-bold bg-green-100 text-green-700">{searchResult.status?.replace('_', ' ') || 'UNKNOWN'}</span>
               </div>
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div><p className="text-gray-500">From</p><p className="font-semibold">{searchResult.senderName}</p></div>
                 <div><p className="text-gray-500">To</p><p className="font-semibold">{searchResult.receiverName}</p></div>
                 <div><p className="text-gray-500">Weight</p><p className="font-semibold">{searchResult.weightKg} kg</p></div>
-                <div><p className="text-gray-500">SACCO</p><p className="font-semibold">{saccos.find(s => s.id === searchResult.saccoId)?.name || 'Unknown'}</p></div>
+                <div><p className="text-gray-500">SACCO</p><p className="font-semibold">{getSaccoName(searchResult.saccoId)}</p></div>
               </div>
             </div>
           )}
           {searchResult === 'NOT_FOUND' && (
             <div className="bg-red-50 border border-red-200 p-4 rounded-xl mb-6 text-left">
-              <p className="text-red-700 font-semibold"> Parcel not found</p>
+              <p className="text-red-700 font-semibold">❌ Parcel not found</p>
               <p className="text-sm text-red-600">Please check your tracking ID and try again.</p>
             </div>
           )}
