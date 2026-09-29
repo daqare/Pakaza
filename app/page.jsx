@@ -10,16 +10,21 @@ export default function Home() {
   const [searchResult, setSearchResult] = useState(null);
   const [showQrModal, setShowQrModal] = useState(null);
 
-  const totalRevenue = ledger ? ledger.reduce((sum, entry) => sum + (entry.total || 0), 0) : 0;
-  const myParcels = parcels ? parcels.filter(p => p.saccoId === operatorSaccoId) : [];
+  // SAFETY: Ensure these are always arrays
+  const safeSaccos = Array.isArray(saccos) ? saccos : [];
+  const safeParcels = Array.isArray(parcels) ? parcels : [];
+  const safeLedger = Array.isArray(ledger) ? ledger : [];
+
+  const totalRevenue = safeLedger.reduce((sum, entry) => sum + (entry.total || 0), 0);
+  const myParcels = safeParcels.filter(p => p.saccoId === operatorSaccoId);
   const myRevenue = myParcels.reduce((sum, p) => sum + (p.price || 0), 0);
   const myEarnings = Math.round(myRevenue * 0.45); 
-  const mySacco = saccos ? saccos.find(s => s.id === operatorSaccoId) : null;
+  const mySacco = safeSaccos.find(s => s.id === operatorSaccoId);
 
   const handleReset = () => { if (window.confirm('Reset data?')) resetDemoData(); };
   const handleTrack = (e) => {
     e.preventDefault();
-    const found = parcels ? parcels.find(p => p && p.id && p.id.toLowerCase() === searchId.toLowerCase()) : null;
+    const found = safeParcels.find(p => p && p.id && p.id.toLowerCase() === searchId.toLowerCase());
     setSearchResult(found || 'NOT_FOUND');
   };
 
@@ -29,7 +34,6 @@ export default function Home() {
     return index === -1 ? 0 : index + 1;
   };
 
-  // --- ADMIN VIEW ---
   if (currentRole === 'ADMIN') {
     return (
       <div className="space-y-6 animate-slide-up">
@@ -57,14 +61,14 @@ export default function Home() {
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200"><p className="text-sm text-gray-500 mb-1">Parcels in Network</p><p className="text-3xl font-bold text-gray-900">{parcels ? parcels.length : 0}</p></div>
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200"><p className="text-sm text-gray-500 mb-1">Parcels in Network</p><p className="text-3xl font-bold text-gray-900">{safeParcels.length}</p></div>
           <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200"><p className="text-sm text-gray-500 mb-1">Revenue Collected</p><p className="text-3xl font-bold text-pakaza-blue">KES {totalRevenue.toLocaleString()}</p></div>
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200"><p className="text-sm text-gray-500 mb-1">Active Routes</p><p className="text-3xl font-bold text-pakaza-green">{saccos ? saccos.length : 0}</p></div>
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200"><p className="text-sm text-gray-500 mb-1">Active Routes</p><p className="text-3xl font-bold text-pakaza-green">{safeSaccos.length}</p></div>
         </div>
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h2 className="text-lg font-semibold mb-4">Operator Self-Service QR Codes</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {saccos && saccos.map((sacco) => (
+            {safeSaccos.map((sacco) => (
               <div key={sacco.id} className="border border-gray-200 rounded-xl p-4 flex flex-col items-center text-center hover:shadow-md transition">
                 <div className={`w-12 h-12 ${sacco.color} rounded-lg mb-3 flex items-center justify-center text-white font-bold text-xl`}>{sacco.name.charAt(0)}</div>
                 <h3 className="font-bold text-gray-900">{sacco.name}</h3>
@@ -77,7 +81,7 @@ export default function Home() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="flex justify-between items-center mb-4"><h2 className="text-lg font-semibold">Recent Activity</h2><button onClick={handleReset} className="text-xs text-gray-400 hover:text-red-500">Reset</button></div>
           <div className="space-y-3">
-            {parcels && parcels.length > 0 ? parcels.slice(0, 5).map((parcel) => (
+            {safeParcels.length > 0 ? safeParcels.slice(0, 5).map((parcel) => (
               <button key={parcel.id} onClick={() => setSelectedParcel(parcel)} className="w-full flex justify-between items-center p-4 bg-gray-50 rounded-xl border border-transparent hover:border-pakaza-blue/30 hover:bg-blue-50/50 transition-all text-left">
                 <div><p className="font-bold text-pakaza-blue">{parcel.id}</p><p className="text-sm text-gray-600">{parcel.senderName} → {parcel.receiverName}</p></div>
                 <div className="flex items-center gap-3">
@@ -93,7 +97,6 @@ export default function Home() {
     );
   }
 
-  // --- OPERATOR VIEW ---
   if (currentRole === 'OPERATOR') {
     return (
       <div className="space-y-6 animate-slide-up">
@@ -101,7 +104,7 @@ export default function Home() {
         <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div><p className="text-xs text-gray-500 uppercase font-bold">Demo Simulation</p><p className="text-sm text-gray-700">Switch driver identity to test different revenue splits.</p></div>
           <select value={operatorSaccoId} onChange={(e) => setOperatorSaccoId(e.target.value)} className="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pakaza-blue font-semibold text-pakaza-blue bg-gray-50">
-            {saccos && saccos.map(s => (<option key={s.id} value={s.id}>🚐 {s.name} Driver</option>))}
+            {safeSaccos.map(s => (<option key={s.id} value={s.id}>🚐 {s.name} Driver</option>))}
           </select>
         </div>
         <div className="bg-gradient-to-r from-pakaza-blue to-blue-800 text-white p-8 rounded-2xl shadow-lg">
@@ -142,7 +145,6 @@ export default function Home() {
     );
   }
 
-  // --- STAFF VIEW ---
   if (currentRole === 'STAFF') {
     return (
       <div className="space-y-6 animate-slide-up max-w-2xl mx-auto text-center pt-10">
@@ -152,7 +154,7 @@ export default function Home() {
           <p className="text-gray-500 mb-8">Fast intake and M-Pesa integration.</p>
           <Link href="/new" className="block w-full bg-pakaza-blue text-white text-xl py-4 rounded-xl font-bold hover:bg-pakaza-darkBlue transition shadow-lg">+ Book New Parcel</Link>
           <div className="mt-8 grid grid-cols-2 gap-4 text-left">
-            <div className="bg-gray-50 p-4 rounded-lg"><p className="text-xs text-gray-500">Today's Parcels</p><p className="text-2xl font-bold text-gray-900">{parcels ? parcels.length : 0}</p></div>
+            <div className="bg-gray-50 p-4 rounded-lg"><p className="text-xs text-gray-500">Today's Parcels</p><p className="text-2xl font-bold text-gray-900">{safeParcels.length}</p></div>
             <div className="bg-gray-50 p-4 rounded-lg"><p className="text-xs text-gray-500">Today's Sales</p><p className="text-2xl font-bold text-pakaza-blue">KES {totalRevenue.toLocaleString()}</p></div>
           </div>
         </div>
@@ -160,7 +162,6 @@ export default function Home() {
     );
   }
 
-  // --- CLIENT VIEW ---
   if (currentRole === 'CLIENT') {
     const currentStep = searchResult && searchResult !== 'NOT_FOUND' ? getTimelineStep(searchResult.status) : 0;
     const steps = [
@@ -209,7 +210,7 @@ export default function Home() {
                 <div><p className="text-gray-500">From</p><p className="font-semibold">{searchResult.senderName}</p></div>
                 <div><p className="text-gray-500">To</p><p className="font-semibold">{searchResult.receiverName}</p></div>
                 <div><p className="text-gray-500">Weight</p><p className="font-semibold">{searchResult.weightKg} kg</p></div>
-                <div><p className="text-gray-500">SACCO</p><p className="font-semibold">{saccos.find(s => s.id === searchResult.saccoId)?.name || 'Unknown'}</p></div>
+                <div><p className="text-gray-500">SACCO</p><p className="font-semibold">{safeSaccos.find(s => s.id === searchResult.saccoId)?.name || 'Unknown'}</p></div>
               </div>
             </div>
           )}
