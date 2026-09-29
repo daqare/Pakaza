@@ -21,7 +21,10 @@ export default function Home() {
     return <div className="p-8 text-center">Loading PAKAZA Dashboard...</div>;
   }
 
-  const totalRevenue = ledger.reduce((sum, entry) => sum + entry.total, 0);
+  // Safe calculations
+  const totalRevenue = ledger && ledger.length > 0 
+    ? ledger.reduce((sum, entry) => sum + (entry.total || 0), 0) 
+    : 0;
 
   const handleReset = () => {
     if (window.confirm('Reset all data to default demo state?')) {
@@ -31,15 +34,23 @@ export default function Home() {
 
   const handleTrack = (e) => {
     e.preventDefault();
-    const found = parcels.find(p => p.id.toLowerCase() === searchId.toLowerCase());
+    if (!parcels || parcels.length === 0) {
+      setSearchResult('NOT_FOUND');
+      return;
+    }
+    const found = parcels.find(p => p && p.id && p.id.toLowerCase() === searchId.toLowerCase());
     setSearchResult(found || 'NOT_FOUND');
   };
 
-  // Helper to safely get SACCO name
+  // Safe SACCO lookup
   const getSaccoName = (saccoId) => {
-    if (!saccoId) return 'Unknown';
-    const sacco = saccos.find(s => s.id === saccoId);
-    return sacco ? sacco.name : 'Unknown';
+    if (!saccos || !saccoId) return 'Unknown SACCO';
+    try {
+      const found = saccos.find(s => s && s.id === saccoId);
+      return found ? found.name : 'Unknown SACCO';
+    } catch (e) {
+      return 'Unknown SACCO';
+    }
   };
 
   // --- ADMIN VIEW ---
@@ -86,7 +97,7 @@ export default function Home() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
             <p className="text-sm text-gray-500 mb-1">Parcels in Network</p>
-            <p className="text-3xl font-bold text-gray-900">{parcels.length}</p>
+            <p className="text-3xl font-bold text-gray-900">{parcels ? parcels.length : 0}</p>
           </div>
           <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
             <p className="text-sm text-gray-500 mb-1">Revenue Collected</p>
@@ -94,14 +105,14 @@ export default function Home() {
           </div>
           <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
             <p className="text-sm text-gray-500 mb-1">Active Routes</p>
-            <p className="text-3xl font-bold text-pakaza-green">{saccos.length}</p>
+            <p className="text-3xl font-bold text-pakaza-green">{saccos ? saccos.length : 0}</p>
           </div>
         </div>
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h2 className="text-lg font-semibold mb-4">Operator QR Codes</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {saccos.map((sacco) => (
+            {saccos && saccos.map((sacco) => (
               <div key={sacco.id} className="border border-gray-200 rounded-xl p-4 flex flex-col items-center text-center">
                 <div className={`w-12 h-12 ${sacco.color} rounded-lg mb-3 flex items-center justify-center text-white font-bold text-xl`}>
                   {sacco.name.charAt(0)}
@@ -121,10 +132,10 @@ export default function Home() {
             <button onClick={handleReset} className="text-xs text-gray-400 hover:text-red-500 transition">Reset</button>
           </div>
           <div className="space-y-3">
-            {parcels.slice(0, 5).map((parcel) => (
+            {parcels && parcels.length > 0 ? parcels.slice(0, 5).map((parcel) => (
               <button 
                 key={parcel.id} 
-                onClick={() => setSelectedParcel(parcel)}
+                onClick={() => parcel && setSelectedParcel(parcel)}
                 className="w-full flex justify-between items-center p-4 bg-gray-50 rounded-xl border border-transparent hover:border-pakaza-blue/30 hover:bg-blue-50/50 transition-all text-left"
               >
                 <div>
@@ -132,18 +143,18 @@ export default function Home() {
                   <p className="text-sm text-gray-600">{parcel.senderName} → {parcel.receiverName}</p>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="hidden sm:inline text-xs font-semibold text-gray-500">KES {parcel.price?.toLocaleString() || 0}</span>
+                  <span className="hidden sm:inline text-xs font-semibold text-gray-500">KES {(parcel.price || 0).toLocaleString()}</span>
                   <span className={`px-3 py-1 rounded-full text-xs font-bold ${
                     parcel.status === 'PAID' ? 'bg-blue-100 text-blue-700' :
                     parcel.status === 'IN_TRANSIT' ? 'bg-purple-100 text-purple-700' :
                     parcel.status === 'ARRIVED' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
                   }`}>
-                    {parcel.status?.replace('_', ' ') || 'UNKNOWN'}
+                    {(parcel.status || 'UNKNOWN').replace('_', ' ')}
                   </span>
                   <span className="text-gray-400">→</span>
                 </div>
               </button>
-            ))}
+            )) : <p className="text-gray-500 text-center py-4">No parcels yet</p>}
           </div>
         </div>
       </div>
@@ -164,7 +175,7 @@ export default function Home() {
           <div className="mt-8 grid grid-cols-2 gap-4 text-left">
             <div className="bg-gray-50 p-4 rounded-lg">
               <p className="text-xs text-gray-500">Today's Parcels</p>
-              <p className="text-2xl font-bold text-gray-900">{parcels.length}</p>
+              <p className="text-2xl font-bold text-gray-900">{parcels ? parcels.length : 0}</p>
             </div>
             <div className="bg-gray-50 p-4 rounded-lg">
               <p className="text-xs text-gray-500">Today's Sales</p>
@@ -181,23 +192,23 @@ export default function Home() {
     return (
       <div className="space-y-6 max-w-2xl mx-auto text-center pt-10">
         <div className="bg-white p-10 rounded-2xl shadow-lg border border-gray-200">
-          <div className="text-6xl mb-4"></div>
+          <div className="text-6xl mb-4">📱</div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Client Tracking</h1>
           <p className="text-gray-500 mb-8">Enter your tracking ID to see live status.</p>
           <form onSubmit={handleTrack} className="flex gap-2 mb-6">
             <input type="text" placeholder="Enter ID (e.g., PAK-1001)" value={searchId} onChange={(e) => setSearchId(e.target.value)} className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-pakaza-blue outline-none" />
             <button type="submit" className="bg-pakaza-green text-white px-6 py-3 rounded-xl font-bold hover:bg-green-700 transition">Track</button>
           </form>
-          {searchResult && searchResult !== 'NOT_FOUND' && (
+          {searchResult && searchResult !== 'NOT_FOUND' && searchResult.id && (
             <div className="bg-green-50 border border-green-200 p-6 rounded-xl mb-6 text-left">
               <div className="flex justify-between items-start mb-4">
                 <div><p className="text-sm text-gray-600">Tracking ID</p><p className="text-2xl font-bold text-pakaza-blue">{searchResult.id}</p></div>
-                <span className="px-4 py-2 rounded-full text-sm font-bold bg-green-100 text-green-700">{searchResult.status?.replace('_', ' ') || 'UNKNOWN'}</span>
+                <span className="px-4 py-2 rounded-full text-sm font-bold bg-green-100 text-green-700">{(searchResult.status || 'UNKNOWN').replace('_', ' ')}</span>
               </div>
               <div className="grid grid-cols-2 gap-4 text-sm">
-                <div><p className="text-gray-500">From</p><p className="font-semibold">{searchResult.senderName}</p></div>
-                <div><p className="text-gray-500">To</p><p className="font-semibold">{searchResult.receiverName}</p></div>
-                <div><p className="text-gray-500">Weight</p><p className="font-semibold">{searchResult.weightKg} kg</p></div>
+                <div><p className="text-gray-500">From</p><p className="font-semibold">{searchResult.senderName || 'N/A'}</p></div>
+                <div><p className="text-gray-500">To</p><p className="font-semibold">{searchResult.receiverName || 'N/A'}</p></div>
+                <div><p className="text-gray-500">Weight</p><p className="font-semibold">{searchResult.weightKg || 0} kg</p></div>
                 <div><p className="text-gray-500">SACCO</p><p className="font-semibold">{getSaccoName(searchResult.saccoId)}</p></div>
               </div>
             </div>
