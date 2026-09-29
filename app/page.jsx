@@ -4,15 +4,21 @@ import usePakazaStore from '../lib/store';
 import { saccos } from '../lib/saccos';
 
 export default function Home() {
-  const { parcels, ledger } = usePakazaStore();
+  const { parcels, ledger, resetDemoData } = usePakazaStore();
   
   const totalRevenue = ledger.reduce((sum, entry) => sum + entry.total, 0);
+
+  const handleReset = () => {
+    if (window.confirm('Are you sure you want to clear all demo data? This cannot be undone.')) {
+      resetDemoData();
+    }
+  };
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h1 className="text-3xl font-bold text-pakaza-blue">PAKAZA Dashboard</h1>
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-3">
           <Link href="/track" className="bg-white text-pakaza-blue border border-pakaza-blue px-4 py-2 rounded-lg font-medium hover:bg-gray-50 transition">
             Track Parcels
           </Link>
@@ -60,7 +66,18 @@ export default function Home() {
 
       {/* Recent Activity */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <h2 className="text-lg font-semibold mb-4">Recent Activity</h2>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-lg font-semibold">Recent Activity</h2>
+          {parcels.length > 0 && (
+            <button 
+              onClick={handleReset}
+              className="text-sm text-red-500 hover:text-red-700 hover:underline"
+            >
+              Reset Demo Data
+            </button>
+          )}
+        </div>
+        
         {parcels.length === 0 ? (
           <p className="text-gray-500 text-center py-8">
             System ready. No parcels yet.
