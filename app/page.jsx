@@ -3,23 +3,18 @@ import { useState } from 'react';
 import Link from 'next/link';
 import usePakazaStore from '../lib/store';
 import { saccos } from '../lib/saccos';
+import ParcelDetailModal from '../components/ParcelDetailModal';
 
 export default function Home() {
-  const { parcels, ledger, currentRole, resetDemoData, seedDemoData } = usePakazaStore();
+  const { parcels, ledger, currentRole, resetDemoData, setSelectedParcel } = usePakazaStore();
   const [searchId, setSearchId] = useState('');
   const [searchResult, setSearchResult] = useState(null);
   
   const totalRevenue = ledger.reduce((sum, entry) => sum + entry.total, 0);
 
   const handleReset = () => {
-    if (window.confirm('Are you sure you want to clear all demo data?')) {
+    if (window.confirm('Reset all data to default demo state?')) {
       resetDemoData();
-    }
-  };
-
-  const handleSeed = () => {
-    if (window.confirm('Load realistic demo data? This will add 5 sample parcels.')) {
-      seedDemoData();
     }
   };
 
@@ -33,15 +28,13 @@ export default function Home() {
   if (currentRole === 'ADMIN') {
     return (
       <div className="space-y-6 animate-slide-up">
+        <ParcelDetailModal />
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <h1 className="text-3xl font-bold text-pakaza-blue">Admin Control Tower</h1>
             <p className="text-sm text-gray-500">Full oversight of network and revenue.</p>
           </div>
           <div className="flex flex-wrap gap-3">
-            <button onClick={handleSeed} className="bg-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-purple-700 transition shadow-md">
-              ⚡ Load Demo Data
-            </button>
             <Link href="/track" className="bg-white text-pakaza-blue border border-pakaza-blue px-4 py-2 rounded-lg font-medium hover:bg-gray-50 transition">Track Parcels</Link>
             <Link href="/ledger" className="bg-white text-pakaza-blue border border-pakaza-blue px-4 py-2 rounded-lg font-medium hover:bg-gray-50 transition">View Ledger</Link>
             <Link href="/new" className="bg-pakaza-blue text-white px-6 py-2 rounded-lg font-medium hover:bg-pakaza-darkBlue transition shadow-md">+ New Parcel</Link>
@@ -66,33 +59,35 @@ export default function Home() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-semibold">Recent Activity</h2>
-            {parcels.length > 0 && (
-              <div className="flex gap-4">
-                <button onClick={handleSeed} className="text-sm text-purple-600 hover:underline">+ Add Sample Data</button>
-                <button onClick={handleReset} className="text-sm text-red-500 hover:underline">Reset All</button>
-              </div>
-            )}
+            <button onClick={handleReset} className="text-xs text-gray-400 hover:text-red-500 transition">Reset to Default</button>
           </div>
-          {parcels.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="text-gray-500 mb-4">System ready. No parcels yet.</p>
-              <button onClick={handleSeed} className="bg-purple-100 text-purple-700 px-4 py-2 rounded-lg font-medium hover:bg-purple-200 transition">
-                Load Sample Data Now
-              </button>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {parcels.slice(0, 5).map((parcel) => (
-                <div key={parcel.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                  <div>
-                    <p className="font-semibold text-gray-900">{parcel.id}</p>
-                    <p className="text-sm text-gray-500">{parcel.senderName} → {parcel.receiverName}</p>
-                  </div>
-                  <span className="px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">{parcel.status.replace('_', ' ')}</span>
+          
+          <div className="space-y-3">
+            {parcels.slice(0, 5).map((parcel) => (
+              <button 
+                key={parcel.id} 
+                onClick={() => setSelectedParcel(parcel)}
+                className="w-full flex justify-between items-center p-4 bg-gray-50 rounded-xl border border-transparent hover:border-pakaza-blue/30 hover:bg-blue-50/50 transition-all duration-200 text-left group"
+              >
+                <div>
+                  <p className="font-bold text-pakaza-blue group-hover:text-pakaza-darkBlue">{parcel.id}</p>
+                  <p className="text-sm text-gray-600">{parcel.senderName} → {parcel.receiverName}</p>
                 </div>
-              ))}
-            </div>
-          )}
+                <div className="flex items-center gap-3">
+                  <span className="hidden sm:inline text-xs font-semibold text-gray-500">KES {parcel.price.toLocaleString()}</span>
+                  <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                    parcel.status === 'PAID' ? 'bg-blue-100 text-blue-700' :
+                    parcel.status === 'IN_TRANSIT' ? 'bg-purple-100 text-purple-700' :
+                    parcel.status === 'ARRIVED' ? 'bg-green-100 text-green-700' :
+                    'bg-gray-100 text-gray-700'
+                  }`}>
+                    {parcel.status.replace('_', ' ')}
+                  </span>
+                  <span className="text-gray-400 group-hover:text-pakaza-blue">→</span in
+                </div>
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     );
@@ -106,11 +101,9 @@ export default function Home() {
           <div className="text-6xl mb-4">📦</div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Counter Staff Portal</h1>
           <p className="text-gray-500 mb-8">Fast intake and M-Pesa integration.</p>
-          
           <Link href="/new" className="block w-full bg-pakaza-blue text-white text-xl py-4 rounded-xl font-bold hover:bg-pakaza-darkBlue transition shadow-lg">
             + Book New Parcel
           </Link>
-          
           <div className="mt-8 grid grid-cols-2 gap-4 text-left">
             <div className="bg-gray-50 p-4 rounded-lg">
               <p className="text-xs text-gray-500">Today's Parcels</p>
@@ -134,11 +127,10 @@ export default function Home() {
           <div className="text-6xl mb-4">📱</div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Client Tracking</h1>
           <p className="text-gray-500 mb-8">Enter your tracking ID to see live status.</p>
-          
           <form onSubmit={handleTrack} className="flex gap-2 mb-6">
             <input 
               type="text" 
-              placeholder="Enter ID (e.g., PAK-1000)" 
+              placeholder="Enter ID (e.g., PAK-1001)" 
               value={searchId}
               onChange={(e) => setSearchId(e.target.value)}
               className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-pakaza-blue outline-none"
