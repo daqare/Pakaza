@@ -13,7 +13,6 @@ export default function Home() {
 
   const totalRevenue = ledger ? ledger.reduce((sum, entry) => sum + (entry.total || 0), 0) : 0;
 
-  // --- OPERATOR SPECIFIC CALCULATIONS ---
   const myParcels = parcels ? parcels.filter(p => p.saccoId === operatorSaccoId) : [];
   const myRevenue = myParcels.reduce((sum, p) => sum + (p.price || 0), 0);
   const myEarnings = Math.round(myRevenue * 0.45); 
@@ -24,6 +23,13 @@ export default function Home() {
     e.preventDefault();
     const found = parcels ? parcels.find(p => p && p.id && p.id.toLowerCase() === searchId.toLowerCase()) : null;
     setSearchResult(found || 'NOT_FOUND');
+  };
+
+  // Helper for Timeline
+  const getTimelineStep = (status) => {
+    const steps = ['PAID', 'IN_TRANSIT', 'ARRIVED', 'COLLECTED'];
+    const index = steps.indexOf(status);
+    return index === -1 ? 0 : index + 1;
   };
 
   // --- ADMIN VIEW ---
@@ -89,53 +95,31 @@ export default function Home() {
     );
   }
 
-  // --- OPERATOR VIEW (WITH DROPDOWN) ---
+  // --- OPERATOR VIEW ---
   if (currentRole === 'OPERATOR') {
     return (
       <div className="space-y-6 animate-slide-up">
         <ParcelDetailModal />
-        
-        {/* NEW: Demo Simulation Dropdown */}
         <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div>
             <p className="text-xs text-gray-500 uppercase font-bold">Demo Simulation</p>
             <p className="text-sm text-gray-700">Switch driver identity to test different revenue splits.</p>
           </div>
-          <select
-            value={operatorSaccoId}
-            onChange={(e) => setOperatorSaccoId(e.target.value)}
-            className="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pakaza-blue font-semibold text-pakaza-blue bg-gray-50"
-          >
-            {saccos && saccos.map(s => (
-              <option key={s.id} value={s.id}>🚐 {s.name} Driver</option>
-            ))}
+          <select value={operatorSaccoId} onChange={(e) => setOperatorSaccoId(e.target.value)} className="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pakaza-blue font-semibold text-pakaza-blue bg-gray-50">
+            {saccos && saccos.map(s => (<option key={s.id} value={s.id}> {s.name} Driver</option>))}
           </select>
         </div>
-
         <div className="bg-gradient-to-r from-pakaza-blue to-blue-800 text-white p-8 rounded-2xl shadow-lg">
           <div className="flex items-center gap-4 mb-4">
             <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center text-3xl">🚐</div>
-            <div>
-              <h1 className="text-2xl font-bold">Driver Portal</h1>
-              <p className="text-blue-200">Logged in as: {mySacco?.name} Fleet</p>
-            </div>
+            <div><h1 className="text-2xl font-bold">Driver Portal</h1><p className="text-blue-200">Logged in as: {mySacco?.name} Fleet</p></div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
-            <div className="bg-white/10 p-4 rounded-xl backdrop-blur-sm">
-              <p className="text-xs text-blue-200 uppercase">My Deliveries</p>
-              <p className="text-2xl font-bold">{myParcels.length}</p>
-            </div>
-            <div className="bg-white/10 p-4 rounded-xl backdrop-blur-sm">
-              <p className="text-xs text-blue-200 uppercase">Total Value Moved</p>
-              <p className="text-2xl font-bold">KES {myRevenue.toLocaleString()}</p>
-            </div>
-            <div className="bg-white/20 p-4 rounded-xl backdrop-blur-sm border border-white/30">
-              <p className="text-xs text-blue-100 uppercase">My 45% Earnings</p>
-              <p className="text-3xl font-black text-green-300">KES {myEarnings.toLocaleString()}</p>
-            </div>
+            <div className="bg-white/10 p-4 rounded-xl backdrop-blur-sm"><p className="text-xs text-blue-200 uppercase">My Deliveries</p><p className="text-2xl font-bold">{myParcels.length}</p></div>
+            <div className="bg-white/10 p-4 rounded-xl backdrop-blur-sm"><p className="text-xs text-blue-200 uppercase">Total Value Moved</p><p className="text-2xl font-bold">KES {myRevenue.toLocaleString()}</p></div>
+            <div className="bg-white/20 p-4 rounded-xl backdrop-blur-sm border border-white/30"><p className="text-xs text-blue-100 uppercase">My 45% Earnings</p><p className="text-3xl font-black text-green-300">KES {myEarnings.toLocaleString()}</p></div>
           </div>
         </div>
-
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h2 className="text-lg font-semibold mb-4">My Active Parcels</h2>
           <div className="space-y-3">
@@ -147,7 +131,7 @@ export default function Home() {
                   <span className={`px-3 py-1 rounded-full text-xs font-bold ${parcel.status === 'PAID' ? 'bg-blue-100 text-blue-700' : parcel.status === 'IN_TRANSIT' ? 'bg-purple-100 text-purple-700' : 'bg-green-100 text-green-700'}`}>{(parcel.status || 'UNKNOWN').replace('_', ' ')}</span>
                 </div>
               </button>
-            )) : <p className="text-gray-500 text-center py-4">No deliveries for {mySacco?.name} yet. Try creating a parcel for this SACCO!</p>}
+            )) : <p className="text-gray-500 text-center py-4">No deliveries for {mySacco?.name} yet.</p>}
           </div>
         </div>
       </div>
@@ -172,27 +156,80 @@ export default function Home() {
     );
   }
 
-  // --- CLIENT VIEW ---
+  // --- CLIENT VIEW (WITH TIMELINE) ---
   if (currentRole === 'CLIENT') {
+    const currentStep = searchResult && searchResult !== 'NOT_FOUND' ? getTimelineStep(searchResult.status) : 0;
+    const steps = [
+      { id: 'PAID', label: 'Booked & Paid', icon: '💳' },
+      { id: 'IN_TRANSIT', label: 'In Transit', icon: '🚐' },
+      { id: 'ARRIVED', label: 'Arrived at Hub', icon: '📍' },
+      { id: 'COLLECTED', label: 'Collected', icon: '✅' },
+    ];
+
     return (
-      <div className="space-y-6 animate-slide-up max-w-2xl mx-auto text-center pt-10">
-        <div className="bg-white p-10 rounded-2xl shadow-lg border border-gray-200">
-          <div className="text-6xl mb-4">📱</div>
+      <div className="space-y-6 animate-slide-up max-w-2xl mx-auto text-center pt-5">
+        <div className="bg-white p-8 rounded-2xl shadow-lg border border-gray-200">
+          <div className="text-5xl mb-2">📱</div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Client Tracking</h1>
-          <p className="text-gray-500 mb-8">Enter your tracking ID to see live status.</p>
-          <form onSubmit={handleTrack} className="flex gap-2 mb-6">
+          <p className="text-gray-500 mb-6">Enter your tracking ID to see live status.</p>
+          
+          <form onSubmit={handleTrack} className="flex gap-2 mb-8">
             <input type="text" placeholder="Enter ID (e.g., PAK-1001)" value={searchId} onChange={(e) => setSearchId(e.target.value)} className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-pakaza-blue outline-none" />
             <button type="submit" className="bg-pakaza-green text-white px-6 py-3 rounded-xl font-bold hover:bg-green-700 transition">Track</button>
           </form>
+
           {searchResult && searchResult !== 'NOT_FOUND' && searchResult.id && (
-            <div className="bg-green-50 border border-green-200 p-6 rounded-xl mb-6 text-left animate-slide-up">
-              <div className="flex justify-between items-start mb-4">
-                <div><p className="text-sm text-gray-600">Tracking ID</p><p className="text-2xl font-bold text-pakaza-blue">{searchResult.id}</p></div>
-                <span className="px-4 py-2 rounded-full text-sm font-bold bg-green-100 text-green-700">{(searchResult.status || 'UNKNOWN').replace('_', ' ')}</span>
+            <div className="bg-gray-50 border border-gray-200 p-6 rounded-xl text-left animate-slide-up">
+              <div className="flex justify-between items-center mb-6 pb-4 border-b border-gray-200">
+                <div>
+                  <p className="text-xs text-gray-500 uppercase font-bold">Tracking ID</p>
+                  <p className="text-2xl font-black text-pakaza-blue">{searchResult.id}</p>
+                </div>
+                <span className="px-4 py-2 rounded-full text-sm font-bold bg-pakaza-blue text-white">
+                  {(searchResult.status || 'UNKNOWN').replace('_', ' ')}
+                </span>
+              </div>
+
+              {/* Visual Timeline */}
+              <div className="relative pl-8 border-l-2 border-gray-200 space-y-8 my-8">
+                {steps.map((step, index) => {
+                  const isCompleted = index < currentStep;
+                  const isCurrent = index === currentStep;
+                  return (
+                    <div key={step.id} className="relative">
+                      {/* Dot */}
+                      <div className={`absolute -left-[41px] top-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold border-2 ${
+                        isCompleted ? 'bg-green-500 border-green-500 text-white' : 
+                        isCurrent ? 'bg-white border-pakaza-blue text-pakaza-blue animate-pulse' : 
+                        'bg-white border-gray-300 text-gray-300'
+                      }`}>
+                        {isCompleted ? '✓' : index + 1}
+                      </div>
+                      {/* Content */}
+                      <div className={`${isCurrent ? 'opacity-100' : isCompleted ? 'opacity-100' : 'opacity-40'}`}>
+                        <p className={`font-bold ${isCurrent ? 'text-pakaza-blue' : 'text-gray-900'}`}>{step.label}</p>
+                        <p className="text-xs text-gray-500">{isCompleted ? 'Completed' : isCurrent ? 'Current Status' : 'Pending'}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 text-sm bg-white p-4 rounded-lg border border-gray-100">
+                <div><p className="text-gray-500">From</p><p className="font-semibold">{searchResult.senderName}</p></div>
+                <div><p className="text-gray-500">To</p><p className="font-semibold">{searchResult.receiverName}</p></div>
+                <div><p className="text-gray-500">Weight</p><p className="font-semibold">{searchResult.weightKg} kg</p></div>
+                <div><p className="text-gray-500">SACCO</p><p className="font-semibold">{saccos.find(s => s.id === searchResult.saccoId)?.name || 'Unknown'}</p></div>
               </div>
             </div>
           )}
-          {searchResult === 'NOT_FOUND' && <div className="bg-red-50 border border-red-200 p-4 rounded-xl mb-6 text-left"><p className="text-red-700 font-semibold">Parcel not found</p></div>}
+
+          {searchResult === 'NOT_FOUND' && (
+            <div className="bg-red-50 border border-red-200 p-4 rounded-xl text-left">
+              <p className="text-red-700 font-semibold">❌ Parcel not found</p>
+              <p className="text-sm text-red-600">Please check your tracking ID and try again.</p>
+            </div>
+          )}
         </div>
       </div>
     );
