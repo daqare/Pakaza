@@ -1,10 +1,13 @@
 'use client';
+import { useState } from 'react';
 import Link from 'next/link';
 import usePakazaStore from '../lib/store';
 import { saccos } from '../lib/saccos';
 
 export default function Home() {
   const { parcels, ledger, currentRole, resetDemoData } = usePakazaStore();
+  const [searchId, setSearchId] = useState('');
+  const [searchResult, setSearchResult] = useState(null);
   
   const totalRevenue = ledger.reduce((sum, entry) => sum + entry.total, 0);
 
@@ -12,6 +15,12 @@ export default function Home() {
     if (window.confirm('Are you sure you want to clear all demo data?')) {
       resetDemoData();
     }
+  };
+
+  const handleTrack = (e) => {
+    e.preventDefault();
+    const found = parcels.find(p => p.id.toLowerCase() === searchId.toLowerCase());
+    setSearchResult(found || 'NOT_FOUND');
   };
 
   // --- ADMIN VIEW ---
@@ -98,7 +107,7 @@ export default function Home() {
     );
   }
 
-  // --- CLIENT VIEW ---
+  // --- CLIENT VIEW (FIXED) ---
   if (currentRole === 'CLIENT') {
     return (
       <div className="space-y-6 animate-slide-up max-w-2xl mx-auto text-center pt-10">
@@ -107,29 +116,67 @@ export default function Home() {
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Client Tracking</h1>
           <p className="text-gray-500 mb-8">Enter your tracking ID to see live status.</p>
           
-          <div className="flex gap-2">
+          <form onSubmit={handleTrack} className="flex gap-2 mb-6">
             <input 
               type="text" 
               placeholder="Enter ID (e.g., PAK-1096)" 
+              value={searchId}
+              onChange={(e) => setSearchId(e.target.value)}
               className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-pakaza-blue outline-none"
             />
-            <button className="bg-pakaza-green text-white px-6 py-3 rounded-xl font-bold hover:bg-green-700 transition">
+            <button type="submit" className="bg-pakaza-green text-white px-6 py-3 rounded-xl font-bold hover:bg-green-700 transition">
               Track
             </button>
-          </div>
+          </form>
 
-          <div className="mt-8 text-left bg-gray-50 p-6 rounded-xl">
-            <h3 className="font-bold text-gray-700 mb-2">Recent Updates:</h3>
-            {parcels.length === 0 ? (
-              <p className="text-sm text-gray-500">No active parcels.</p>
-            ) : (
-              parcels.slice(0, 3).map(p => (
-                <div key={p.id} className="flex justify-between py-2 border-b border-gray-200 last:border-0">
-                  <span className="font-mono text-sm text-pakaza-blue">{p.id}</span>
-                  <span className="text-sm font-semibold text-green-600">{p.status.replace('_', ' ')}</span>
+          {/* Search Result */}
+          {searchResult && searchResult !== 'NOT_FOUND' && (
+            <div className="bg-green-50 border border-green-200 p-6 rounded-xl mb-6 text-left animate-slide-up">
+              <div className="flex justify-between items-start mb-4">
+                <div>
+                  <p className="text-sm text-gray-600">Tracking ID</p>
+                  <p className="text-2xl font-bold text-pakaza-blue">{searchResult.id}</p>
                 </div>
-              ))
-            )}
+                <span className="px-4 py-2 rounded-full text-sm font-bold bg-green-100 text-green-700">
+                  {searchResult.status.replace('_', ' ')}
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p className="text-gray-500">From</p>
+                  <p className="font-semibold">{searchResult.senderName}</p>
+                </div>
+                <div>
+                  <p className="text-gray-500">To</p>
+                  <p className="font-semibold">{searchResult.receiverName}</p>
+                </div>
+                <div>
+                  <p className="text-gray-500">Weight</p>
+                  <p className="font-semibold">{searchResult.weightKg} kg</p>
+                </div>
+                <div>
+                  <p className="text-gray-500">SACCO</p>
+                  <p className="font-semibold">{saccos.find(s => s.id === searchResult.saccoId)?.name || 'Unknown'}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {searchResult === 'NOT_FOUND' && (
+            <div className="bg-red-50 border border-red-200 p-4 rounded-xl mb-6 text-left animate-slide-up">
+              <p className="text-red-700 font-semibold">❌ Parcel not found</p>
+              <p className="text-sm text-red-600">Please check your tracking ID and try again.</p>
+            </div>
+          )}
+
+          {/* Removed "Recent Updates" to protect privacy */}
+          <div className="mt-8 text-left bg-gray-50 p-6 rounded-xl">
+            <h3 className="font-bold text-gray-700 mb-2">How it works:</h3>
+            <ul className="text-sm text-gray-600 space-y-2">
+              <li>✅ <strong>1.</strong> Enter your unique tracking ID above</li>
+              <li>✅ <strong>2.</strong> See real-time status updates</li>
+              <li>✅ <strong>3.</strong> Receive SMS notifications at each stage</li>
+            </ul>
           </div>
         </div>
       </div>
