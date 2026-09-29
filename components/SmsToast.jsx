@@ -7,8 +7,8 @@ export default function SmsToast() {
   if (!smsToast) return null;
 
   return (
-    <div className="fixed top-24 right-6 z-50 max-w-sm w-full animate-slide-in-right">
-      <div className="bg-gray-900 text-white p-4 rounded-xl shadow-2xl border-l-4 border-green-500 flex items-start gap-3">
+    <div className="fixed top-24 right-6 z-50 max-w-sm w-full">
+      <div className="bg-gray-900 text-white p-4 rounded-xl shadow-2xl border-l-4 border-green-500 flex items-start gap-3 animate-bounce">
         <div className="text-2xl">📱</div>
         <div>
           <p className="text-xs text-gray-400 font-bold mb-1">NEW SMS FROM PAKAZA</p>
