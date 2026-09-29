@@ -1,2 +1,0 @@
-# pakaza
-PAKAZA parcel
