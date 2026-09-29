@@ -12,7 +12,6 @@ export default function Home() {
   const [showQrModal, setShowQrModal] = useState(null);
   
   const totalRevenue = ledger.reduce((sum, entry) => sum + entry.total, 0);
-  const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://pakazaapp.vercel.app';
 
   const handleReset = () => {
     if (window.confirm('Reset all data to default demo state?')) {
@@ -24,6 +23,10 @@ export default function Home() {
     e.preventDefault();
     const found = parcels.find(p => p.id.toLowerCase() === searchId.toLowerCase());
     setSearchResult(found || 'NOT_FOUND');
+  };
+
+  const handleShowQr = (sacco) => {
+    setShowQrModal(sacco);
   };
 
   // --- ADMIN VIEW ---
@@ -39,8 +42,7 @@ export default function Home() {
               <h3 className="text-xl font-bold text-gray-900 mb-2">{showQrModal.name} QR Code</h3>
               <p className="text-sm text-gray-500 mb-6">Clients scan this to book directly with {showQrModal.name}</p>
               
-              <div className="w-48 h-48 bg-gray-900 rounded-xl mx-auto mb-4 flex items-center justify-center text-white text-xs p-4 font-mono break-all">
-                {/* Simulated QR */}
+              <div className="w-48 h-48 bg-gray-900 rounded-xl mx-auto mb-4 flex items-center justify-center text-white text-xs p-4 font-mono">
                 <div className="grid grid-cols-8 gap-1 w-full h-full">
                   {[...Array(64)].map((_, i) => (
                     <div key={i} className={`rounded-sm ${Math.random() > 0.4 ? 'bg-white' : 'bg-transparent'}`}></div>
@@ -50,7 +52,7 @@ export default function Home() {
               
               <div className="bg-gray-100 p-3 rounded-lg mb-4">
                 <p className="text-xs text-gray-500 mb-1">Direct Booking Link:</p>
-                <p className="text-xs font-mono text-pakaza-blue break-all">{baseUrl}/new?sacco={showQrModal.id}</p>
+                <p className="text-xs font-mono text-pakaza-blue break-all">/new?sacco={showQrModal.id}</p>
               </div>
               
               <button onClick={() => setShowQrModal(null)} className="w-full bg-pakaza-blue text-white py-3 rounded-xl font-bold hover:bg-pakaza-darkBlue transition">Close</button>
@@ -97,7 +99,7 @@ export default function Home() {
                 <h3 className="font-bold text-gray-900">{sacco.name}</h3>
                 <p className="text-xs text-gray-500 mb-4">{sacco.route}</p>
                 <button 
-                  onClick={() => setShowQrModal(sacco)}
+                  onClick={() => handleShowQr(sacco)}
                   className="w-full bg-gray-900 text-white py-2 rounded-lg text-sm font-semibold hover:bg-gray-800 transition flex items-center justify-center gap-2"
                 >
                   📱 View QR Code
@@ -147,7 +149,7 @@ export default function Home() {
     return (
       <div className="space-y-6 animate-slide-up max-w-2xl mx-auto text-center pt-10">
         <div className="bg-white p-10 rounded-2xl shadow-lg border border-gray-200">
-          <div className="text-6xl mb-4">📦</div>
+          <div className="text-6xl mb-4"></div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Counter Staff Portal</h1>
           <p className="text-gray-500 mb-8">Fast intake and M-Pesa integration.</p>
           <Link href="/new" className="block w-full bg-pakaza-blue text-white text-xl py-4 rounded-xl font-bold hover:bg-pakaza-darkBlue transition shadow-lg">
