@@ -2,17 +2,15 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import usePakazaStore from '../lib/store';
-import { saccos } from '../lib/saccos';
 import ParcelDetailModal from '../components/ParcelDetailModal';
 
 export default function Home() {
-  const { parcels, ledger, currentRole, operatorSaccoId, setOperatorSaccoId, resetDemoData, setSelectedParcel } = usePakazaStore();
+  const { parcels, ledger, currentRole, operatorSaccoId, setOperatorSaccoId, saccos, resetDemoData, setSelectedParcel } = usePakazaStore();
   const [searchId, setSearchId] = useState('');
   const [searchResult, setSearchResult] = useState(null);
   const [showQrModal, setShowQrModal] = useState(null);
 
   const totalRevenue = ledger ? ledger.reduce((sum, entry) => sum + (entry.total || 0), 0) : 0;
-
   const myParcels = parcels ? parcels.filter(p => p.saccoId === operatorSaccoId) : [];
   const myRevenue = myParcels.reduce((sum, p) => sum + (p.price || 0), 0);
   const myEarnings = Math.round(myRevenue * 0.45); 
@@ -25,7 +23,6 @@ export default function Home() {
     setSearchResult(found || 'NOT_FOUND');
   };
 
-  // Helper for Timeline
   const getTimelineStep = (status) => {
     const steps = ['PAID', 'IN_TRANSIT', 'ARRIVED', 'COLLECTED'];
     const index = steps.indexOf(status);
@@ -53,6 +50,7 @@ export default function Home() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div><h1 className="text-3xl font-bold text-pakaza-blue">Admin Control Tower</h1><p className="text-sm text-gray-500">Full oversight of network and revenue.</p></div>
           <div className="flex flex-wrap gap-3">
+            <Link href="/settings" className="bg-white text-pakaza-blue border border-pakaza-blue px-4 py-2 rounded-lg font-medium">⚙️ Manage</Link>
             <Link href="/track" className="bg-white text-pakaza-blue border border-pakaza-blue px-4 py-2 rounded-lg font-medium">Track Parcels</Link>
             <Link href="/ledger" className="bg-white text-pakaza-blue border border-pakaza-blue px-4 py-2 rounded-lg font-medium">View Ledger</Link>
             <Link href="/new" className="bg-pakaza-blue text-white px-6 py-2 rounded-lg font-medium shadow-md">+ New Parcel</Link>
@@ -101,10 +99,7 @@ export default function Home() {
       <div className="space-y-6 animate-slide-up">
         <ParcelDetailModal />
         <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div>
-            <p className="text-xs text-gray-500 uppercase font-bold">Demo Simulation</p>
-            <p className="text-sm text-gray-700">Switch driver identity to test different revenue splits.</p>
-          </div>
+          <div><p className="text-xs text-gray-500 uppercase font-bold">Demo Simulation</p><p className="text-sm text-gray-700">Switch driver identity to test different revenue splits.</p></div>
           <select value={operatorSaccoId} onChange={(e) => setOperatorSaccoId(e.target.value)} className="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pakaza-blue font-semibold text-pakaza-blue bg-gray-50">
             {saccos && saccos.map(s => (<option key={s.id} value={s.id}> {s.name} Driver</option>))}
           </select>
@@ -156,7 +151,7 @@ export default function Home() {
     );
   }
 
-  // --- CLIENT VIEW (WITH TIMELINE) ---
+  // --- CLIENT VIEW ---
   if (currentRole === 'CLIENT') {
     const currentStep = searchResult && searchResult !== 'NOT_FOUND' ? getTimelineStep(searchResult.status) : 0;
     const steps = [
@@ -181,31 +176,18 @@ export default function Home() {
           {searchResult && searchResult !== 'NOT_FOUND' && searchResult.id && (
             <div className="bg-gray-50 border border-gray-200 p-6 rounded-xl text-left animate-slide-up">
               <div className="flex justify-between items-center mb-6 pb-4 border-b border-gray-200">
-                <div>
-                  <p className="text-xs text-gray-500 uppercase font-bold">Tracking ID</p>
-                  <p className="text-2xl font-black text-pakaza-blue">{searchResult.id}</p>
-                </div>
-                <span className="px-4 py-2 rounded-full text-sm font-bold bg-pakaza-blue text-white">
-                  {(searchResult.status || 'UNKNOWN').replace('_', ' ')}
-                </span>
+                <div><p className="text-xs text-gray-500 uppercase font-bold">Tracking ID</p><p className="text-2xl font-black text-pakaza-blue">{searchResult.id}</p></div>
+                <span className="px-4 py-2 rounded-full text-sm font-bold bg-pakaza-blue text-white">{(searchResult.status || 'UNKNOWN').replace('_', ' ')}</span>
               </div>
-
-              {/* Visual Timeline */}
               <div className="relative pl-8 border-l-2 border-gray-200 space-y-8 my-8">
                 {steps.map((step, index) => {
                   const isCompleted = index < currentStep;
                   const isCurrent = index === currentStep;
                   return (
                     <div key={step.id} className="relative">
-                      {/* Dot */}
-                      <div className={`absolute -left-[41px] top-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold border-2 ${
-                        isCompleted ? 'bg-green-500 border-green-500 text-white' : 
-                        isCurrent ? 'bg-white border-pakaza-blue text-pakaza-blue animate-pulse' : 
-                        'bg-white border-gray-300 text-gray-300'
-                      }`}>
+                      <div className={`absolute -left-[41px] top-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold border-2 ${isCompleted ? 'bg-green-500 border-green-500 text-white' : isCurrent ? 'bg-white border-pakaza-blue text-pakaza-blue animate-pulse' : 'bg-white border-gray-300 text-gray-300'}`}>
                         {isCompleted ? '✓' : index + 1}
                       </div>
-                      {/* Content */}
                       <div className={`${isCurrent ? 'opacity-100' : isCompleted ? 'opacity-100' : 'opacity-40'}`}>
                         <p className={`font-bold ${isCurrent ? 'text-pakaza-blue' : 'text-gray-900'}`}>{step.label}</p>
                         <p className="text-xs text-gray-500">{isCompleted ? 'Completed' : isCurrent ? 'Current Status' : 'Pending'}</p>
@@ -214,7 +196,6 @@ export default function Home() {
                   );
                 })}
               </div>
-
               <div className="grid grid-cols-2 gap-4 text-sm bg-white p-4 rounded-lg border border-gray-100">
                 <div><p className="text-gray-500">From</p><p className="font-semibold">{searchResult.senderName}</p></div>
                 <div><p className="text-gray-500">To</p><p className="font-semibold">{searchResult.receiverName}</p></div>
@@ -223,13 +204,7 @@ export default function Home() {
               </div>
             </div>
           )}
-
-          {searchResult === 'NOT_FOUND' && (
-            <div className="bg-red-50 border border-red-200 p-4 rounded-xl text-left">
-              <p className="text-red-700 font-semibold">❌ Parcel not found</p>
-              <p className="text-sm text-red-600">Please check your tracking ID and try again.</p>
-            </div>
-          )}
+          {searchResult === 'NOT_FOUND' && <div className="bg-red-50 border border-red-200 p-4 rounded-xl text-left"><p className="text-red-700 font-semibold">❌ Parcel not found</p></div>}
         </div>
       </div>
     );
