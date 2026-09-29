@@ -10,11 +10,19 @@ export default function Home() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h1 className="text-3xl font-bold text-pakaza-blue">PAKAZA Dashboard</h1>
-        <Link href="/new" className="bg-pakaza-blue text-white px-6 py-3 rounded-lg font-medium hover:bg-pakaza-darkBlue transition shadow-md">
-          + New Parcel
-        </Link>
+        <div className="flex gap-3">
+          <Link href="/track" className="bg-white text-pakaza-blue border border-pakaza-blue px-4 py-2 rounded-lg font-medium hover:bg-gray-50 transition">
+            Track Parcels
+          </Link>
+          <Link href="/ledger" className="bg-white text-pakaza-blue border border-pakaza-blue px-4 py-2 rounded-lg font-medium hover:bg-gray-50 transition">
+            View Ledger
+          </Link>
+          <Link href="/new" className="bg-pakaza-blue text-white px-6 py-2 rounded-lg font-medium hover:bg-pakaza-darkBlue transition shadow-md">
+            + New Parcel
+          </Link>
+        </div>
       </div>
 
       {/* Stats Grid */}
@@ -65,8 +73,8 @@ export default function Home() {
                   <p className="font-semibold text-gray-900">{parcel.id}</p>
                   <p className="text-sm text-gray-500">{parcel.senderName} → {parcel.receiverName}</p>
                 </div>
-                <span className="px-3 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-700">
-                  {parcel.status}
+                <span className="px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">
+                  {parcel.status.replace('_', ' ')}
                 </span>
               </div>
             ))}
