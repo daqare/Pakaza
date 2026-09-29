@@ -8,7 +8,6 @@ body {
   font-family: system-ui, -apple-system, sans-serif;
 }
 
-/* Custom Animations */
 @keyframes slideUp {
   from { transform: translateY(20px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
@@ -25,4 +24,25 @@ body {
 
 .animate-slide-in-right {
   animation: slideInRight 0.4s ease-out forwards;
+}
+
+/* Print Styles: Hides everything except the receipt when printing */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #waybill-print-area, #waybill-print-area * {
+    visibility: visible;
+  }
+  #waybill-print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    background: white;
+    padding: 20px;
+  }
+  .no-print {
+    display: none !important;
+  }
 }
