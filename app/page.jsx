@@ -5,7 +5,7 @@ import usePakazaStore from '../lib/store';
 import { saccos } from '../lib/saccos';
 
 export default function Home() {
-  const { parcels, ledger, currentRole, resetDemoData } = usePakazaStore();
+  const { parcels, ledger, currentRole, resetDemoData, seedDemoData } = usePakazaStore();
   const [searchId, setSearchId] = useState('');
   const [searchResult, setSearchResult] = useState(null);
   
@@ -14,6 +14,12 @@ export default function Home() {
   const handleReset = () => {
     if (window.confirm('Are you sure you want to clear all demo data?')) {
       resetDemoData();
+    }
+  };
+
+  const handleSeed = () => {
+    if (window.confirm('Load realistic demo data? This will add 5 sample parcels.')) {
+      seedDemoData();
     }
   };
 
@@ -33,6 +39,9 @@ export default function Home() {
             <p className="text-sm text-gray-500">Full oversight of network and revenue.</p>
           </div>
           <div className="flex flex-wrap gap-3">
+            <button onClick={handleSeed} className="bg-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-purple-700 transition shadow-md">
+              ⚡ Load Demo Data
+            </button>
             <Link href="/track" className="bg-white text-pakaza-blue border border-pakaza-blue px-4 py-2 rounded-lg font-medium hover:bg-gray-50 transition">Track Parcels</Link>
             <Link href="/ledger" className="bg-white text-pakaza-blue border border-pakaza-blue px-4 py-2 rounded-lg font-medium hover:bg-gray-50 transition">View Ledger</Link>
             <Link href="/new" className="bg-pakaza-blue text-white px-6 py-2 rounded-lg font-medium hover:bg-pakaza-darkBlue transition shadow-md">+ New Parcel</Link>
@@ -57,10 +66,20 @@ export default function Home() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-semibold">Recent Activity</h2>
-            {parcels.length > 0 && <button onClick={handleReset} className="text-sm text-red-500 hover:underline">Reset Demo</button>}
+            {parcels.length > 0 && (
+              <div className="flex gap-4">
+                <button onClick={handleSeed} className="text-sm text-purple-600 hover:underline">+ Add Sample Data</button>
+                <button onClick={handleReset} className="text-sm text-red-500 hover:underline">Reset All</button>
+              </div>
+            )}
           </div>
           {parcels.length === 0 ? (
-            <p className="text-gray-500 text-center py-8">System ready. No parcels yet.</p>
+            <div className="text-center py-8">
+              <p className="text-gray-500 mb-4">System ready. No parcels yet.</p>
+              <button onClick={handleSeed} className="bg-purple-100 text-purple-700 px-4 py-2 rounded-lg font-medium hover:bg-purple-200 transition">
+                Load Sample Data Now
+              </button>
+            </div>
           ) : (
             <div className="space-y-3">
               {parcels.slice(0, 5).map((parcel) => (
@@ -107,7 +126,7 @@ export default function Home() {
     );
   }
 
-  // --- CLIENT VIEW (FIXED) ---
+  // --- CLIENT VIEW ---
   if (currentRole === 'CLIENT') {
     return (
       <div className="space-y-6 animate-slide-up max-w-2xl mx-auto text-center pt-10">
@@ -119,7 +138,7 @@ export default function Home() {
           <form onSubmit={handleTrack} className="flex gap-2 mb-6">
             <input 
               type="text" 
-              placeholder="Enter ID (e.g., PAK-1096)" 
+              placeholder="Enter ID (e.g., PAK-1000)" 
               value={searchId}
               onChange={(e) => setSearchId(e.target.value)}
               className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-pakaza-blue outline-none"
@@ -129,7 +148,6 @@ export default function Home() {
             </button>
           </form>
 
-          {/* Search Result */}
           {searchResult && searchResult !== 'NOT_FOUND' && (
             <div className="bg-green-50 border border-green-200 p-6 rounded-xl mb-6 text-left animate-slide-up">
               <div className="flex justify-between items-start mb-4">
@@ -142,22 +160,10 @@ export default function Home() {
                 </span>
               </div>
               <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <p className="text-gray-500">From</p>
-                  <p className="font-semibold">{searchResult.senderName}</p>
-                </div>
-                <div>
-                  <p className="text-gray-500">To</p>
-                  <p className="font-semibold">{searchResult.receiverName}</p>
-                </div>
-                <div>
-                  <p className="text-gray-500">Weight</p>
-                  <p className="font-semibold">{searchResult.weightKg} kg</p>
-                </div>
-                <div>
-                  <p className="text-gray-500">SACCO</p>
-                  <p className="font-semibold">{saccos.find(s => s.id === searchResult.saccoId)?.name || 'Unknown'}</p>
-                </div>
+                <div><p className="text-gray-500">From</p><p className="font-semibold">{searchResult.senderName}</p></div>
+                <div><p className="text-gray-500">To</p><p className="font-semibold">{searchResult.receiverName}</p></div>
+                <div><p className="text-gray-500">Weight</p><p className="font-semibold">{searchResult.weightKg} kg</p></div>
+                <div><p className="text-gray-500">SACCO</p><p className="font-semibold">{saccos.find(s => s.id === searchResult.saccoId)?.name || 'Unknown'}</p></div>
               </div>
             </div>
           )}
@@ -169,7 +175,6 @@ export default function Home() {
             </div>
           )}
 
-          {/* Removed "Recent Updates" to protect privacy */}
           <div className="mt-8 text-left bg-gray-50 p-6 rounded-xl">
             <h3 className="font-bold text-gray-700 mb-2">How it works:</h3>
             <ul className="text-sm text-gray-600 space-y-2">
