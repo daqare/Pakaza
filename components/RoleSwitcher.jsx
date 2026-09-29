@@ -11,7 +11,7 @@ export default function RoleSwitcher() {
   ];
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 bg-white p-2 rounded-full shadow-2xl border border-gray-200 flex gap-2 animate-slide-up">
+    <div className="fixed bottom-6 right-6 z-50 bg-white p-2 rounded-full shadow-2xl border border-gray-200 flex gap-2">
       {roles.map((role) => (
         <button
           key={role.id}
