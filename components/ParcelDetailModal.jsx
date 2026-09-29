@@ -1,120 +1,239 @@
 'use client';
-import { usePakazaStore } from '../lib/store';
+import { useState } from 'react';
+import Link from 'next/link';
+import usePakazaStore from '../lib/store';
 import { saccos } from '../lib/saccos';
+import ParcelDetailModal from '../components/ParcelDetailModal';
 
-export default function ParcelDetailModal() {
-  const { selectedParcel, setSelectedParcel, updateStatus } = usePakazaStore();
+export default function Home() {
+  const { parcels, ledger, currentRole, resetDemoData, setSelectedParcel } = usePakazaStore();
+  const [searchId, setSearchId] = useState('');
+  const [searchResult, setSearchResult] = useState(null);
+  const [showQrModal, setShowQrModal] = useState(null);
 
-  if (!selectedParcel) return null;
+  const totalRevenue = ledger ? ledger.reduce((sum, entry) => sum + (entry.total || 0), 0) : 0;
 
-  const sacco = saccos.find((s) => s && s.id === selectedParcel.saccoId);
-  const price = selectedParcel.price || 0;
-  const split = {
-    pakaza: Math.round(price * 0.50),
-    operator: Math.round(price * 0.45),
-    sacco: Math.round(price * 0.05),
+  const handleReset = () => {
+    if (window.confirm('Reset all data to default demo state?')) {
+      resetDemoData();
+    }
   };
 
-  const statusColors = {
-    INITIATED: 'bg-yellow-100 text-yellow-800',
-    PAID: 'bg-blue-100 text-blue-800',
-    IN_TRANSIT: 'bg-purple-100 text-purple-800',
-    ARRIVED: 'bg-green-100 text-green-800',
-    COLLECTED: 'bg-gray-100 text-gray-800',
+  const handleTrack = (e) => {
+    e.preventDefault();
+    if (!parcels || parcels.length === 0) {
+      setSearchResult('NOT_FOUND');
+      return;
+    }
+    const found = parcels.find(p => p && p.id && p.id.toLowerCase() === searchId.toLowerCase());
+    setSearchResult(found || 'NOT_FOUND');
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in overflow-y-auto" onClick={() => setSelectedParcel(null)}>
-      <div
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-slide-up my-8"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="bg-pakaza-blue text-white p-6 flex justify-between items-start">
-          <div>
-            <p className="text-blue-200 text-sm font-medium mb-1">Tracking ID</p>
-            <h2 className="text-3xl font-black tracking-tight">{selectedParcel.id}</h2>
+  const getSaccoName = (saccoId) => {
+    if (!saccos || !saccoId) return 'Unknown SACCO';
+    const found = saccos.find(s => s && s.id === saccoId);
+    return found ? found.name : 'Unknown SACCO';
+  };
+
+  // --- ADMIN VIEW ---
+  if (currentRole === 'ADMIN') {
+    return (
+      <div className="space-y-6 animate-slide-up">
+        <ParcelDetailModal />
+
+        {showQrModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={() => setShowQrModal(null)}>
+            <div className="bg-white rounded-2xl p-8 max-w-sm w-full text-center animate-slide-up" onClick={(e) => e.stopPropagation()}>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">{showQrModal.name} QR Code</h3>
+              <p className="text-sm text-gray-500 mb-6">Clients scan this to book directly with {showQrModal.name}</p>
+
+              <div className="w-48 h-48 bg-gray-900 rounded-xl mx-auto mb-4 flex items-center justify-center text-white text-xs p-4 font-mono">
+                <div className="grid grid-cols-8 gap-1 w-full h-full">
+                  {[...Array(64)].map((_, i) => (
+                    <div key={i} className={`rounded-sm ${Math.random() > 0.4 ? 'bg-white' : 'bg-transparent'}`}></div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="bg-gray-100 p-3 rounded-lg mb-4">
+                <p className="text-xs text-gray-500 mb-1">Direct Booking Link:</p>
+                <p className="text-xs font-mono text-pakaza-blue break-all">/new?sacco={showQrModal.id}</p>
+              </div>
+
+              <button onClick={() => setShowQrModal(null)} className="w-full bg-pakaza-blue text-white py-3 rounded-xl font-bold hover:bg-pakaza-darkBlue transition">Close</button>
+            </div>
           </div>
-          <button
-            onClick={() => setSelectedParcel(null)}
-            className="text-white/70 hover:text-white hover:bg-white/20 rounded-full p-2 transition"
-          >
-            ✕
-          </button>
+        )}
+
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-pakaza-blue">Admin Control Tower</h1>
+            <p className="text-sm text-gray-500">Full oversight of network and revenue.</p>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <Link href="/track" className="bg-white text-pakaza-blue border border-pakaza-blue px-4 py-2 rounded-lg font-medium hover:bg-gray-50 transition">Track Parcels</Link>
+            <Link href="/ledger" className="bg-white text-pakaza-blue border border-pakaza-blue px-4 py-2 rounded-lg font-medium hover:bg-gray-50 transition">View Ledger</Link>
+            <Link href="/new" className="bg-pakaza-blue text-white px-6 py-2 rounded-lg font-medium hover:bg-pakaza-darkBlue transition shadow-md">+ New Parcel</Link>
+          </div>
         </div>
 
-        <div className="p-6 space-y-6">
-          <div className="flex justify-between items-center">
-            <span className={`px-4 py-1.5 rounded-full text-sm font-bold ${statusColors[selectedParcel.status] || 'bg-gray-100 text-gray-800'}`}>
-              {(selectedParcel.status || 'UNKNOWN').replace('_', ' ')}
-            </span>
-            <span className="text-sm font-semibold text-gray-600">{sacco?.name || 'Unknown SACCO'}</span>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+            <p className="text-sm text-gray-500 mb-1">Parcels in Network</p>
+            <p className="text-3xl font-bold text-gray-900">{parcels ? parcels.length : 0}</p>
           </div>
-
-          <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-2 h-2 rounded-full bg-pakaza-blue"></div>
-              <div>
-                <p className="text-xs text-gray-500 uppercase tracking-wider">Sender</p>
-                <p className="font-semibold text-gray-900">{selectedParcel.senderName || 'N/A'}</p>
-              </div>
-            </div>
-            <div className="w-0.5 h-6 bg-gray-300 ml-1"></div>
-            <div className="flex items-center gap-3">
-              <div className="w-2 h-2 rounded-full bg-pakaza-green"></div>
-              <div>
-                <p className="text-xs text-gray-500 uppercase tracking-wider">Receiver</p>
-                <p className="font-semibold text-gray-900">{selectedParcel.receiverName || 'N/A'}</p>
-              </div>
-            </div>
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+            <p className="text-sm text-gray-500 mb-1">Revenue Collected</p>
+            <p className="text-3xl font-bold text-pakaza-blue">KES {totalRevenue.toLocaleString()}</p>
           </div>
-
-          <div>
-            <h3 className="text-sm font-bold text-gray-900 mb-3 uppercase tracking-wider">Financial Breakdown</h3>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between py-2 border-b border-gray-100">
-                <span className="text-gray-600">Total Weight</span>
-                <span className="font-semibold">{selectedParcel.weightKg || 0} kg</span>
-              </div>
-              <div className="flex justify-between py-2 border-b border-gray-100">
-                <span className="text-gray-600">Total Price</span>
-                <span className="font-bold text-gray-900">KES {price.toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between py-2 border-b border-gray-100">
-                <span className="text-pakaza-blue">PAKAZA Share (50%)</span>
-                <span className="font-semibold text-pakaza-blue">KES {split.pakaza.toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between py-2 border-b border-gray-100">
-                <span className="text-green-600">Operator Share (45%)</span>
-                <span className="font-semibold text-green-600">KES {split.operator.toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between py-2">
-                <span className="text-purple-600">SACCO Share (5%)</span>
-                <span className="font-semibold text-purple-600">KES {split.sacco.toLocaleString()}</span>
-              </div>
-            </div>
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+            <p className="text-sm text-gray-500 mb-1">Active Routes</p>
+            <p className="text-3xl font-bold text-pakaza-green">{saccos ? saccos.length : 0}</p>
           </div>
+        </div>
 
-          <div className="pt-4 border-t border-gray-200">
-            <label className="block text-xs font-semibold text-gray-500 mb-2 uppercase">Update Status</label>
-            <select
-              value={selectedParcel.status || 'INITIATED'}
-              onChange={(e) => {
-                updateStatus(selectedParcel.id, e.target.value);
-                usePakazaStore.setState({
-                  selectedParcel: { ...selectedParcel, status: e.target.value }
-                });
-              }}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pakaza-blue focus:border-transparent font-medium"
-            >
-              <option value="INITIATED">Initiated</option>
-              <option value="PAID">Paid</option>
-              <option value="IN_TRANSIT">In Transit</option>
-              <option value="ARRIVED">Arrived</option>
-              <option value="COLLECTED">Collected</option>
-            </select>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <h2 className="text-lg font-semibold mb-4">Operator Self-Service QR Codes</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {saccos && saccos.map((sacco) => (
+              <div key={sacco.id} className="border border-gray-200 rounded-xl p-4 flex flex-col items-center text-center hover:shadow-md transition">
+                <div className={`w-12 h-12 ${sacco.color} rounded-lg mb-3 flex items-center justify-center text-white font-bold text-xl`}>
+                  {sacco.name.charAt(0)}
+                </div>
+                <h3 className="font-bold text-gray-900">{sacco.name}</h3>
+                <p className="text-xs text-gray-500 mb-4">{sacco.route}</p>
+                <button
+                  onClick={() => setShowQrModal(sacco)}
+                  className="w-full bg-gray-900 text-white py-2 rounded-lg text-sm font-semibold hover:bg-gray-800 transition flex items-center justify-center gap-2"
+                >
+                  📱 View QR Code
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-semibold">Recent Activity</h2>
+            <button onClick={handleReset} className="text-xs text-gray-400 hover:text-red-500 transition">Reset to Default</button>
+          </div>
+          <div className="space-y-3">
+            {parcels && parcels.length > 0 ? parcels.slice(0, 5).map((parcel) => (
+              <button
+                key={parcel.id}
+                onClick={() => setSelectedParcel(parcel)}
+                className="w-full flex justify-between items-center p-4 bg-gray-50 rounded-xl border border-transparent hover:border-pakaza-blue/30 hover:bg-blue-50/50 transition-all duration-200 text-left group"
+              >
+                <div>
+                  <p className="font-bold text-pakaza-blue group-hover:text-pakaza-darkBlue">{parcel.id}</p>
+                  <p className="text-sm text-gray-600">{parcel.senderName} → {parcel.receiverName}</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="hidden sm:inline text-xs font-semibold text-gray-500">KES {(parcel.price || 0).toLocaleString()}</span>
+                  <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                    parcel.status === 'PAID' ? 'bg-blue-100 text-blue-700' :
+                    parcel.status === 'IN_TRANSIT' ? 'bg-purple-100 text-purple-700' :
+                    parcel.status === 'ARRIVED' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
+                  }`}>
+                    {(parcel.status || 'UNKNOWN').replace('_', ' ')}
+                  </span>
+                  <span className="text-gray-400 group-hover:text-pakaza-blue">→</span>
+                </div>
+              </button>
+            )) : <p className="text-gray-500 text-center py-4">No parcels yet.</p>}
           </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  }
+
+  // --- STAFF VIEW ---
+  if (currentRole === 'STAFF') {
+    return (
+      <div className="space-y-6 animate-slide-up max-w-2xl mx-auto text-center pt-10">
+        <div className="bg-white p-10 rounded-2xl shadow-lg border border-gray-200">
+          <div className="text-6xl mb-4">📦</div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Counter Staff Portal</h1>
+          <p className="text-gray-500 mb-8">Fast intake and M-Pesa integration.</p>
+          <Link href="/new" className="block w-full bg-pakaza-blue text-white text-xl py-4 rounded-xl font-bold hover:bg-pakaza-darkBlue transition shadow-lg">
+            + Book New Parcel
+          </Link>
+          <div className="mt-8 grid grid-cols-2 gap-4 text-left">
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <p className="text-xs text-gray-500">Today's Parcels</p>
+              <p className="text-2xl font-bold text-gray-900">{parcels ? parcels.length : 0}</p>
+            </div>
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <p className="text-xs text-gray-500">Today's Sales</p>
+              <p className="text-2xl font-bold text-pakaza-blue">KES {totalRevenue.toLocaleString()}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // --- CLIENT VIEW ---
+  if (currentRole === 'CLIENT') {
+    return (
+      <div className="space-y-6 animate-slide-up max-w-2xl mx-auto text-center pt-10">
+        <div className="bg-white p-10 rounded-2xl shadow-lg border border-gray-200">
+          <div className="text-6xl mb-4">📱</div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Client Tracking</h1>
+          <p className="text-gray-500 mb-8">Enter your tracking ID to see live status.</p>
+          <form onSubmit={handleTrack} className="flex gap-2 mb-6">
+            <input
+              type="text"
+              placeholder="Enter ID (e.g., PAK-1001)"
+              value={searchId}
+              onChange={(e) => setSearchId(e.target.value)}
+              className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-pakaza-blue outline-none"
+            />
+            <button type="submit" className="bg-pakaza-green text-white px-6 py-3 rounded-xl font-bold hover:bg-green-700 transition">
+              Track
+            </button>
+          </form>
+
+          {searchResult && searchResult !== 'NOT_FOUND' && searchResult.id && (
+            <div className="bg-green-50 border border-green-200 p-6 rounded-xl mb-6 text-left animate-slide-up">
+              <div className="flex justify-between items-start mb-4">
+                <div>
+                  <p className="text-sm text-gray-600">Tracking ID</p>
+                  <p className="text-2xl font-bold text-pakaza-blue">{searchResult.id}</p>
+                </div>
+                <span className="px-4 py-2 rounded-full text-sm font-bold bg-green-100 text-green-700">
+                  {(searchResult.status || 'UNKNOWN').replace('_', ' ')}
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div><p className="text-gray-500">From</p><p className="font-semibold">{searchResult.senderName || 'N/A'}</p></div>
+                <div><p className="text-gray-500">To</p><p className="font-semibold">{searchResult.receiverName || 'N/A'}</p></div>
+                <div><p className="text-gray-500">Weight</p><p className="font-semibold">{searchResult.weightKg || 0} kg</p></div>
+                <div><p className="text-gray-500">SACCO</p><p className="font-semibold">{getSaccoName(searchResult.saccoId)}</p></div>
+              </div>
+            </div>
+          )}
+
+          {searchResult === 'NOT_FOUND' && (
+            <div className="bg-red-50 border border-red-200 p-4 rounded-xl mb-6 text-left animate-slide-up">
+              <p className="text-red-700 font-semibold"> Parcel not found</p>
+              <p className="text-sm text-red-600">Please check your tracking ID and try again.</p>
+            </div>
+          )}
+
+          <div className="mt-8 text-left bg-gray-50 p-6 rounded-xl">
+            <h3 className="font-bold text-gray-700 mb-2">How it works:</h3>
+            <ul className="text-sm text-gray-600 space-y-2">
+              <li>✅ <strong>1.</strong> Enter your unique tracking ID above</li>
+              <li>✅ <strong>2.</strong> See real-time status updates</li>
+              <li>✅ <strong>3.</strong> Receive SMS notifications at each stage</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return null;
 }
