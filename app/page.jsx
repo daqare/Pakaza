@@ -106,7 +106,7 @@ export default function Home() {
         </div>
         <div className="bg-gradient-to-r from-pakaza-blue to-blue-800 text-white p-8 rounded-2xl shadow-lg">
           <div className="flex items-center gap-4 mb-4">
-            <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center text-3xl"></div>
+            <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center text-3xl">🚐</div>
             <div><h1 className="text-2xl font-bold">Driver Portal</h1><p className="text-blue-200">Logged in as: {mySacco?.name} Fleet</p></div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
