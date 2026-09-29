@@ -83,7 +83,7 @@ export default function Home() {
                   }`}>
                     {parcel.status.replace('_', ' ')}
                   </span>
-                  <span className="text-gray-400 group-hover:text-pakaza-blue">→</span in
+                  <span className="text-gray-400 group-hover:text-pakaza-blue">→</span>
                 </div>
               </button>
             ))}
@@ -124,7 +124,7 @@ export default function Home() {
     return (
       <div className="space-y-6 animate-slide-up max-w-2xl mx-auto text-center pt-10">
         <div className="bg-white p-10 rounded-2xl shadow-lg border border-gray-200">
-          <div className="text-6xl mb-4">📱</div>
+          <div className="text-6xl mb-4"></div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Client Tracking</h1>
           <p className="text-gray-500 mb-8">Enter your tracking ID to see live status.</p>
           <form onSubmit={handleTrack} className="flex gap-2 mb-6">
