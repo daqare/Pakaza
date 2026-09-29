@@ -1,4 +1,6 @@
 import "./globals.css";
+import RoleSwitcher from "../components/RoleSwitcher";
+import SmsToast from "../components/SmsToast";
 
 export const metadata = {
   title: "PAKAZA | Fast. Safe. Nationwide.",
@@ -8,9 +10,9 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body className="bg-pakaza-light min-h-screen flex flex-col">
-        {/* Simple Header for Stage 1 */}
-        <header className="bg-pakaza-blue text-white shadow-md">
+      <body className="bg-pakaza-light min-h-screen flex flex-col relative">
+        {/* Header */}
+        <header className="bg-pakaza-blue text-white shadow-md sticky top-0 z-40">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center text-pakaza-blue font-black text-xl">P</div>
@@ -20,17 +22,21 @@ export default function RootLayout({ children }) {
           </div>
         </header>
 
-        {/* Main Content Area */}
+        {/* Main Content */}
         <main className="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {children}
         </main>
 
-        {/* Simple Footer */}
+        {/* Footer */}
         <footer className="bg-white border-t border-gray-200 py-6 mt-auto">
           <div className="max-w-7xl mx-auto px-4 text-center text-sm text-gray-500">
             © 2026 PAKAZA Parcel Network. Demo Environment.
           </div>
         </footer>
+
+        {/* Global Demo Tools */}
+        <SmsToast />
+        <RoleSwitcher />
       </body>
     </html>
   );
