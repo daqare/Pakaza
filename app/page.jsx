@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 import usePakazaStore from '../lib/store';
 import { saccos } from '../lib/saccos';
 
@@ -11,9 +12,9 @@ export default function Home() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-pakaza-blue">PAKAZA Dashboard</h1>
-        <button className="bg-pakaza-blue text-white px-6 py-3 rounded-lg font-medium hover:bg-pakaza-darkBlue transition shadow-md">
+        <Link href="/new" className="bg-pakaza-blue text-white px-6 py-3 rounded-lg font-medium hover:bg-pakaza-darkBlue transition shadow-md">
           + New Parcel
-        </button>
+        </Link>
       </div>
 
       {/* Stats Grid */}
@@ -54,7 +55,7 @@ export default function Home() {
         <h2 className="text-lg font-semibold mb-4">Recent Activity</h2>
         {parcels.length === 0 ? (
           <p className="text-gray-500 text-center py-8">
-            System ready. No parcels yet. Stage 2 complete!
+            System ready. No parcels yet.
           </p>
         ) : (
           <div className="space-y-3">
