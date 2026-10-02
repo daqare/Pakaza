@@ -40,7 +40,7 @@ export default function DashboardHome() {
     }
   };
 
-  // ADMIN VIEW
+  // --- ADMIN VIEW ---
   if (currentRole === 'ADMIN') {
     return (
       <div className="space-y-8 animate-slide-up">
@@ -63,8 +63,10 @@ export default function DashboardHome() {
             <p className="text-sm text-gray-500 mt-1">Full oversight of network and revenue.</p>
           </div>
           <div className="flex flex-wrap gap-3">
-            <Link href="/settings" className="bg-white text-[#0047AB] border-2 border-[#0047AB] px-4 py-2 rounded-lg font-semibold hover:bg-[#0047AB] hover:text-white transition">️ Manage</Link>
+            <Link href="/settings" className="bg-white text-[#0047AB] border-2 border-[#0047AB] px-4 py-2 rounded-lg font-semibold hover:bg-[#0047AB] hover:text-white transition">⚙️ Manage</Link>
             <Link href="/ledger" className="bg-white text-[#0047AB] border-2 border-[#0047AB] px-4 py-2 rounded-lg font-semibold hover:bg-[#0047AB] hover:text-white transition">View Ledger</Link>
+            {/* NEW LIVE MAP BUTTON ADDED HERE */}
+            <Link href="/map" className="bg-[#00A651] text-white px-4 py-2 rounded-lg font-semibold hover:bg-[#008F45] transition shadow-lg flex items-center gap-2">🗺️ Live Map</Link>
             <Link href="/new" className="bg-[#0047AB] text-white px-6 py-2 rounded-lg font-semibold hover:bg-[#003380] transition shadow-lg">+ New Parcel</Link>
           </div>
         </div>
@@ -122,12 +124,11 @@ export default function DashboardHome() {
     );
   }
 
-  // OPERATOR VIEW
+  // --- OPERATOR VIEW ---
   if (currentRole === 'OPERATOR') {
     return (
       <div className="space-y-6 animate-slide-up">
         <ParcelDetailModal />
-        
         {showWithdrawModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={() => setShowWithdrawModal(false)}>
             <div className="bg-white rounded-2xl p-8 max-w-sm w-full shadow-2xl" onClick={(e) => e.stopPropagation()}>
@@ -147,14 +148,12 @@ export default function DashboardHome() {
             </div>
           </div>
         )}
-
         <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex justify-between items-center">
           <p className="text-sm font-bold text-gray-700">Demo Simulation: Switch Driver Identity</p>
           <select value={operatorSaccoId} onChange={(e) => setOperatorSaccoId(e.target.value)} className="px-4 py-2 border-2 border-gray-200 rounded-lg font-semibold text-[#0047AB]">
             {safeSaccos.map(s => <option key={s.id} value={s.id}>{s.name} Driver</option>)}
           </select>
         </div>
-        
         <div className="bg-gradient-to-br from-[#0047AB] to-[#003380] text-white p-8 rounded-2xl shadow-2xl">
           <div className="flex items-center gap-4 mb-6">
             <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center text-3xl backdrop-blur-sm">🚐</div>
@@ -187,7 +186,7 @@ export default function DashboardHome() {
     );
   }
 
-  // STAFF VIEW
+  // --- STAFF VIEW ---
   if (currentRole === 'STAFF') {
     return (
       <div className="space-y-6 animate-slide-up max-w-2xl mx-auto text-center pt-10">
@@ -201,14 +200,14 @@ export default function DashboardHome() {
     );
   }
 
-  // CLIENT VIEW
+  // --- CLIENT VIEW ---
   if (currentRole === 'CLIENT') {
     const currentStep = searchResult && searchResult !== 'NOT_FOUND' ? getTimelineStep(searchResult.status) : 0;
     const steps = [{ id: 'PAID', label: 'Booked & Paid' }, { id: 'IN_TRANSIT', label: 'In Transit' }, { id: 'ARRIVED', label: 'Arrived at Hub' }, { id: 'COLLECTED', label: 'Collected' }];
     return (
       <div className="space-y-6 animate-slide-up max-w-2xl mx-auto text-center pt-5">
         <div className="bg-white p-8 rounded-2xl shadow-2xl border border-gray-100">
-          <div className="text-5xl mb-2"></div>
+          <div className="text-5xl mb-2">📱</div>
           <h1 className="text-3xl font-black mb-2 text-gray-900">Client Tracking</h1>
           <p className="text-gray-500 mb-6">Enter your tracking ID to see live status.</p>
           <form onSubmit={handleTrack} className="flex gap-2 mb-8">
