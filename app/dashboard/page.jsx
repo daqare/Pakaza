@@ -1,11 +1,10 @@
-
 'use client';
 import { useState } from 'react';
 import Link from 'next/link';
-import usePakazaStore from '../lib/store';
-import ParcelDetailModal from '../components/ParcelDetailModal';
+import usePakazaStore from '../../lib/store';
+import ParcelDetailModal from '../../components/ParcelDetailModal';
 
-export default function Home() {
+export default function DashboardHome() {
   const { parcels, ledger, currentRole, operatorSaccoId, setOperatorSaccoId, saccos, withdrawals, requestPayout, resetDemoData, setSelectedParcel } = usePakazaStore();
   const [searchId, setSearchId] = useState('');
   const [searchResult, setSearchResult] = useState(null);
@@ -58,20 +57,18 @@ export default function Home() {
           </div>
         )}
         
-        {/* Page Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <h1 className="text-3xl font-black text-[#0047AB]">Admin Control Tower</h1>
             <p className="text-sm text-gray-500 mt-1">Full oversight of network and revenue.</p>
           </div>
           <div className="flex flex-wrap gap-3">
-            <Link href="/settings" className="bg-white text-[#0047AB] border-2 border-[#0047AB] px-4 py-2 rounded-lg font-semibold hover:bg-[#0047AB] hover:text-white transition">⚙️ Manage</Link>
+            <Link href="/settings" className="bg-white text-[#0047AB] border-2 border-[#0047AB] px-4 py-2 rounded-lg font-semibold hover:bg-[#0047AB] hover:text-white transition">️ Manage</Link>
             <Link href="/ledger" className="bg-white text-[#0047AB] border-2 border-[#0047AB] px-4 py-2 rounded-lg font-semibold hover:bg-[#0047AB] hover:text-white transition">View Ledger</Link>
             <Link href="/new" className="bg-[#0047AB] text-white px-6 py-2 rounded-lg font-semibold hover:bg-[#003380] transition shadow-lg">+ New Parcel</Link>
           </div>
         </div>
 
-        {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition">
             <p className="text-sm text-gray-500 mb-2 font-medium">Parcels in Network</p>
@@ -87,7 +84,6 @@ export default function Home() {
           </div>
         </div>
 
-        {/* QR Codes Section */}
         <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
           <h2 className="text-xl font-bold mb-6 text-gray-900">Operator QR Codes</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -102,7 +98,6 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Recent Activity */}
         <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-bold text-gray-900">Recent Activity</h2>
