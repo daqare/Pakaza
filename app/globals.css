@@ -2,12 +2,23 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  background-color: #F8FAFC;
-  color: #0F172A;
-  font-family: system-ui, -apple-system, sans-serif;
+:root {
+  --pakaza-blue: #0047AB;
+  --pakaza-blue-dark: #003380;
+  --pakaza-blue-light: #E8F4F8;
+  --pakaza-green: #00A651;
+  --pakaza-red: #ED1C24;
+  --pakaza-gray: #6B7280;
+  --pakaza-bg: #F8FAFC;
 }
 
+body {
+  background-color: var(--pakaza-bg);
+  color: #1F2937;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* Custom Animations */
 @keyframes slideUp {
   from { transform: translateY(20px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
@@ -18,6 +29,11 @@ body {
   to { transform: translateX(0); opacity: 1; }
 }
 
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 .animate-slide-up {
   animation: slideUp 0.4s ease-out forwards;
 }
@@ -26,16 +42,34 @@ body {
   animation: slideInRight 0.4s ease-out forwards;
 }
 
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
 /* Print Styles */
 @media print {
-  body {
-    background: white !important;
-  }
-  /* Hide everything by default */
   body * {
     visibility: hidden;
   }
-  /* Only show the waybill area */
   #waybill-print-area, #waybill-print-area * {
     visibility: visible;
   }
@@ -44,10 +78,9 @@ body {
     left: 0;
     top: 0;
     width: 100%;
-    padding: 20px;
     background: white;
+    padding: 20px;
   }
-  /* Hide elements with the no-print class */
   .no-print {
     display: none !important;
   }
