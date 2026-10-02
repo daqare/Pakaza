@@ -5,20 +5,24 @@ import usePakazaStore from '../lib/store';
 import ParcelDetailModal from '../components/ParcelDetailModal';
 
 export default function Home() {
-  const { parcels, ledger, currentRole, operatorSaccoId, setOperatorSaccoId, saccos, resetDemoData, setSelectedParcel } = usePakazaStore();
+  const { parcels, ledger, currentRole, operatorSaccoId, setOperatorSaccoId, saccos, withdrawals, requestPayout, resetDemoData, setSelectedParcel } = usePakazaStore();
   const [searchId, setSearchId] = useState('');
   const [searchResult, setSearchResult] = useState(null);
   const [showQrModal, setShowQrModal] = useState(null);
+  const [showWithdrawModal, setShowWithdrawModal] = useState(false); // NEW
+  const [withdrawPhone, setWithdrawPhone] = useState(''); // NEW
 
-  // BULLETPROOF: Ensure these are always arrays
   const safeSaccos = Array.isArray(saccos) ? saccos : [];
   const safeParcels = Array.isArray(parcels) ? parcels : [];
   const safeLedger = Array.isArray(ledger) ? ledger : [];
+  const safeWithdrawals = Array.isArray(withdrawals) ? withdrawals : []; // NEW
 
-  const totalRevenue = safeLedger.reduce((sum, e) => sum + (e.total || 0), 0);
+  const totalRevenue = safeLedger.filter(l => l.type === 'REVENUE').reduce((sum, e) => sum + (e.total || 0), 0);
   const myParcels = safeParcels.filter(p => p.saccoId === operatorSaccoId);
   const myRevenue = myParcels.reduce((sum, p) => sum + (p.price || 0), 0);
-  const myEarnings = Math.round(myRevenue * 0.45);
+  const myGrossEarnings = Math.round(myRevenue * 0.45);
+  const myTotalWithdrawn = safeWithdrawals.filter(w => w.saccoId === operatorSaccoId).reduce((sum, w) => sum + w.amount, 0);
+  const myAvailableBalance = myGrossEarnings - myTotalWithdrawn; // NEW
   const mySacco = safeSaccos.find(s => s.id === operatorSaccoId);
 
   const handleTrack = (e) => { 
@@ -26,6 +30,16 @@ export default function Home() {
     setSearchResult(safeParcels.find(p => p?.id?.toLowerCase() === searchId.toLowerCase()) || 'NOT_FOUND'); 
   };
   const getTimelineStep = (status) => ['PAID', 'IN_TRANSIT', 'ARRIVED', 'COLLECTED'].indexOf(status) + 1 || 0;
+
+  // NEW: Handle withdrawal
+  const handleWithdrawSubmit = (e) => {
+    e.preventDefault();
+    if (myAvailableBalance > 0 && withdrawPhone.length >= 10) {
+      requestPayout(operatorSaccoId, myAvailableBalance, withdrawPhone);
+      setShowWithdrawModal(false);
+      setWithdrawPhone('');
+    }
+  };
 
   if (currentRole === 'ADMIN') {
     return (
@@ -83,10 +97,33 @@ export default function Home() {
     );
   }
 
+  // OPERATOR VIEW WITH WITHDRAWAL
   if (currentRole === 'OPERATOR') {
     return (
       <div className="space-y-6 animate-slide-up">
         <ParcelDetailModal />
+        
+        {/* Withdrawal Modal */}
+        {showWithdrawModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={() => setShowWithdrawModal(false)}>
+            <div className="bg-white rounded-2xl p-8 max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Withdraw Funds</h3>
+              <p className="text-sm text-gray-500 mb-6">Send your earnings to M-Pesa.</p>
+              <form onSubmit={handleWithdrawSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Amount to Withdraw</label>
+                  <input type="text" disabled value={`KES ${myAvailableBalance.toLocaleString()}`} className="w-full px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg font-bold text-pakaza-blue" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">M-Pesa Phone Number</label>
+                  <input type="tel" required value={withdrawPhone} onChange={(e) => setWithdrawPhone(e.target.value)} placeholder="0712345678" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pakaza-blue" />
+                </div>
+                <button type="submit" disabled={myAvailableBalance <= 0} className="w-full bg-green-600 text-white py-3 rounded-xl font-bold hover:bg-green-700 transition disabled:opacity-50">Confirm Withdrawal</button>
+              </form>
+            </div>
+          </div>
+        )}
+
         <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex justify-between items-center">
           <p className="text-sm font-bold text-gray-700">Demo Simulation: Switch Driver Identity</p>
           <select value={operatorSaccoId} onChange={(e) => setOperatorSaccoId(e.target.value)} className="px-4 py-2 border rounded-lg">
@@ -97,8 +134,16 @@ export default function Home() {
           <div className="flex items-center gap-4 mb-6"><div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center text-3xl">🚐</div><div><h1 className="text-2xl font-bold">Driver Portal</h1><p className="text-blue-200">Logged in as: {mySacco?.name} Fleet</p></div></div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="bg-white/10 p-4 rounded-xl"><p className="text-xs text-blue-200 uppercase">My Deliveries</p><p className="text-2xl font-bold">{myParcels.length}</p></div>
-            <div className="bg-white/10 p-4 rounded-xl"><p className="text-xs text-blue-200 uppercase">Total Value Moved</p><p className="text-2xl font-bold">KES {myRevenue.toLocaleString()}</p></div>
-            <div className="bg-white/20 p-4 rounded-xl border border-white/30"><p className="text-xs text-blue-100 uppercase">My 45% Earnings</p><p className="text-3xl font-black text-green-300">KES {myEarnings.toLocaleString()}</p></div>
+            <div className="bg-white/10 p-4 rounded-xl"><p className="text-xs text-blue-200 uppercase">Total Earned (45%)</p><p className="text-2xl font-bold">KES {myGrossEarnings.toLocaleString()}</p></div>
+            <div className="bg-white/20 p-4 rounded-xl border border-white/30 relative">
+              <p className="text-xs text-blue-100 uppercase">Available Balance</p>
+              <p className="text-3xl font-black text-green-300">KES {myAvailableBalance.toLocaleString()}</p>
+              {myAvailableBalance > 0 && (
+                <button onClick={() => setShowWithdrawModal(true)} className="mt-2 w-full bg-green-500 hover:bg-green-600 text-white text-xs font-bold py-2 rounded-lg transition">
+                  💸 Withdraw to M-Pesa
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -109,7 +154,7 @@ export default function Home() {
     return (
       <div className="space-y-6 animate-slide-up max-w-2xl mx-auto text-center pt-10">
         <div className="bg-white p-10 rounded-2xl shadow-lg border border-gray-200">
-          <div className="text-6xl mb-4">📦</div>
+          <div className="text-6xl mb-4"></div>
           <h1 className="text-3xl font-bold mb-2">Counter Staff Portal</h1>
           <p className="text-gray-500 mb-8">Fast intake and M-Pesa integration.</p>
           <Link href="/new" className="block w-full bg-pakaza-blue text-white text-xl py-4 rounded-xl font-bold shadow-lg">+ Book New Parcel</Link>
@@ -124,7 +169,7 @@ export default function Home() {
     return (
       <div className="space-y-6 animate-slide-up max-w-2xl mx-auto text-center pt-5">
         <div className="bg-white p-8 rounded-2xl shadow-lg border border-gray-200">
-          <div className="text-5xl mb-2">📱</div>
+          <div className="text-5xl mb-2"></div>
           <h1 className="text-3xl font-bold mb-2">Client Tracking</h1>
           <p className="text-gray-500 mb-6">Enter your tracking ID to see live status.</p>
           <form onSubmit={handleTrack} className="flex gap-2 mb-8">
