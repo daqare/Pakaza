@@ -10,6 +10,7 @@ export default function Home() {
   const [searchResult, setSearchResult] = useState(null);
   const [showQrModal, setShowQrModal] = useState(null);
 
+  // BULLETPROOF: Ensure these are always arrays
   const safeSaccos = Array.isArray(saccos) ? saccos : [];
   const safeParcels = Array.isArray(parcels) ? parcels : [];
   const safeLedger = Array.isArray(ledger) ? ledger : [];
@@ -20,7 +21,10 @@ export default function Home() {
   const myEarnings = Math.round(myRevenue * 0.45);
   const mySacco = safeSaccos.find(s => s.id === operatorSaccoId);
 
-  const handleTrack = (e) => { e.preventDefault(); setSearchResult(safeParcels.find(p => p?.id?.toLowerCase() === searchId.toLowerCase()) || 'NOT_FOUND'); };
+  const handleTrack = (e) => { 
+    e.preventDefault(); 
+    setSearchResult(safeParcels.find(p => p?.id?.toLowerCase() === searchId.toLowerCase()) || 'NOT_FOUND'); 
+  };
   const getTimelineStep = (status) => ['PAID', 'IN_TRANSIT', 'ARRIVED', 'COLLECTED'].indexOf(status) + 1 || 0;
 
   if (currentRole === 'ADMIN') {
@@ -120,7 +124,7 @@ export default function Home() {
     return (
       <div className="space-y-6 animate-slide-up max-w-2xl mx-auto text-center pt-5">
         <div className="bg-white p-8 rounded-2xl shadow-lg border border-gray-200">
-          <div className="text-5xl mb-2"></div>
+          <div className="text-5xl mb-2">📱</div>
           <h1 className="text-3xl font-bold mb-2">Client Tracking</h1>
           <p className="text-gray-500 mb-6">Enter your tracking ID to see live status.</p>
           <form onSubmit={handleTrack} className="flex gap-2 mb-8">
