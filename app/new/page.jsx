@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import usePakazaStore from '../../lib/store';
+import WaybillReceipt from '../../components/WaybillReceipt';
 
 export default function NewParcel() {
   const router = useRouter();
@@ -21,6 +22,7 @@ export default function NewParcel() {
   
   const [showPayment, setShowPayment] = useState(false);
   const [isPaying, setIsPaying] = useState(false);
+  const [generatedParcel, setGeneratedParcel] = useState(null);
   
   const price = Math.ceil(parseFloat(formData.weightKg) || 0) * 200;
 
@@ -33,18 +35,27 @@ export default function NewParcel() {
     setIsPaying(true);
     await new Promise(resolve => setTimeout(resolve, 1500));
     
-    addParcel({
+    const newParcel = addParcel({
       ...formData,
       weightKg: parseFloat(formData.weightKg) || 1,
     });
     
     setIsPaying(false);
     setShowPayment(false);
+    setGeneratedParcel(newParcel);
+  };
+
+  const handleReceiptClose = () => {
+    setGeneratedParcel(null);
     router.push('/');
   };
 
   return (
     <div className="max-w-2xl mx-auto">
+      {generatedParcel && (
+        <WaybillReceipt parcel={generatedParcel} onClose={handleReceiptClose} />
+      )}
+
       <div className="mb-6">
         <button onClick={() => router.back()} className="text-pakaza-blue hover:underline flex items-center gap-1">
           ← Back to Dashboard
