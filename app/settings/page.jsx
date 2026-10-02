@@ -7,9 +7,12 @@ export default function SettingsPage() {
   const { saccos, vehicles, addSacco, addVehicle } = usePakazaStore();
   const [activeTab, setActiveTab] = useState('saccos');
   
-  // Form States
+  // Safety checks
+  const safeSaccos = Array.isArray(saccos) ? saccos : [];
+  const safeVehicles = Array.isArray(vehicles) ? vehicles : [];
+  
   const [newSacco, setNewSacco] = useState({ name: '', route: '', color: 'bg-blue-500' });
-  const [newVehicle, setNewVehicle] = useState({ plate: '', driver: '', saccoId: saccos[0]?.id || '' });
+  const [newVehicle, setNewVehicle] = useState({ plate: '', driver: '', saccoId: safeSaccos[0]?.id || '' });
 
   const handleAddSacco = (e) => {
     e.preventDefault();
@@ -23,7 +26,7 @@ export default function SettingsPage() {
     e.preventDefault();
     if (newVehicle.plate && newVehicle.driver) {
       addVehicle(newVehicle);
-      setNewVehicle({ plate: '', driver: '', saccoId: saccos[0]?.id || '' });
+      setNewVehicle({ plate: '', driver: '', saccoId: safeSaccos[0]?.id || '' });
     }
   };
 
@@ -81,9 +84,9 @@ export default function SettingsPage() {
             </form>
           </div>
           <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-            <h2 className="text-lg font-semibold mb-4">Active Partners ({saccos.length})</h2>
+            <h2 className="text-lg font-semibold mb-4">Active Partners ({safeSaccos.length})</h2>
             <div className="space-y-3 max-h-80 overflow-y-auto">
-              {saccos.map(s => (
+              {safeSaccos.map(s => (
                 <div key={s.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                   <div className={`w-8 h-8 ${s.color} rounded-lg`}></div>
                   <div className="flex-1">
@@ -115,16 +118,16 @@ export default function SettingsPage() {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Assign to SACCO</label>
                 <select value={newVehicle.saccoId} onChange={(e) => setNewVehicle({...newVehicle, saccoId: e.target.value})} className="w-full px-4 py-2 border border-gray-300 rounded-lg">
-                  {saccos.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                  {safeSaccos.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                 </select>
               </div>
               <button type="submit" className="w-full bg-pakaza-blue text-white py-2 rounded-lg font-semibold hover:bg-pakaza-darkBlue transition">Add Vehicle</button>
             </form>
           </div>
           <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-            <h2 className="text-lg font-semibold mb-4">Fleet Registry ({vehicles.length})</h2>
+            <h2 className="text-lg font-semibold mb-4">Fleet Registry ({safeVehicles.length})</h2>
             <div className="space-y-3 max-h-80 overflow-y-auto">
-              {vehicles.map(v => (
+              {safeVehicles.map(v => (
                 <div key={v.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                   <div>
                     <p className="font-bold text-gray-900">{v.plate}</p>
